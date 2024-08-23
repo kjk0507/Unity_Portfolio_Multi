@@ -1,20 +1,18 @@
-using Photon.Pun;
-using Photon.Realtime;
-using System.Collections;
+
 using System.Collections.Generic;
+using Photon.Pun;
 using UnityEngine;
-using Photon;
+using Photon.Realtime;
 using EnumStruct;
-using Photon.Pun.Demo.PunBasics;
-using System;
+using ExitGames.Client.Photon;
 
 public class PhotonManager : MonoBehaviourPunCallbacks
 {
     public static PhotonManager pm_instance;
-    //private PhotonView photonView;
 
     private readonly string gameVersion = "v1.0";
-    private string userId = "tester1";
+    public string userId = "";
+    public string roomName = "";
 
     public GameObject roomPosition;
     public GameObject roomPrefab;
@@ -104,7 +102,7 @@ public class PhotonManager : MonoBehaviourPunCallbacks
             PlayManager.pm_instance.ChangeRole(PlayerRole.Spectoator);
         }
 
-        UIManager.um_instance.ChangeUiState(UIState.Room);        
+        UIManager.um_instance.ChangeUiState(UIState.Room);
     }
 
     public override void OnCreateRoomFailed(short returnCode, string message)
@@ -114,39 +112,43 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
     public void CreatRoom()
     {
+        Debug.Log("방 생성시 아이디 : " + (userId == "") + " 방 이름 : " + (roomName == ""));
+
+        if (userId == "")
+        {
+            userId = "User_" + Random.Range(0, 100);
+        }
+
+        if(roomName == "")
+        {
+            roomName = "Room_" + Random.Range(0, 100);
+        }
+
+        Hashtable customProperties = new Hashtable
+        {
+            { "MasterClientId", userId }
+        };
+
         RoomOptions ro = new RoomOptions();
         ro.IsOpen = true;
         ro.IsVisible = true;
         ro.MaxPlayers = 10;
+        ro.CustomRoomProperties = customProperties;
+        ro.CustomRoomPropertiesForLobby = new string[] { "MasterClientId" };
 
-        PhotonNetwork.CreateRoom("room_1", ro);
+        PhotonNetwork.NickName = userId;
 
-        //photonView.RPC("InstantiateRoomUI", RpcTarget.AllBuffered);
+        PhotonNetwork.CreateRoom(roomName, ro);
     }
 
-    //[PunRPC]
-    //void InstantiateRoomUI()
-    //{
-    //    GameObject originalPrefab = Resources.Load<GameObject>("Prefab/UI/UI_Room");
-    //    if (originalPrefab != null)
-    //    {
-    //        GameObject instance = Instantiate(originalPrefab);
-    //        instance.transform.SetParent(roomList.transform, false);
-    //    }
-    //    else
-    //    {
-    //        Debug.LogError("Prefab/UI_Room을 Resources 폴더에서 찾을 수 없습니다.");
-    //    }
-    //}
-
-    public override void OnRoomListUpdate(List<RoomInfo> roomList)
+    public override void OnRoomListUpdate(List<Photon.Realtime.RoomInfo> roomList)
     {
-        Debug.Log("생성된 방의 수 : " + roomList.Count);
+        //Debug.Log("생성된 방의 수 : " + roomList.Count);
 
         GameObject tempRoom = null;
-        foreach(var room in roomList)
+        foreach (var room in roomList)
         {
-            if(room.RemovedFromList == true)
+            if (room.RemovedFromList == true)
             {
                 roomDict.TryGetValue(room.Name, out tempRoom);
                 Destroy(tempRoom);
@@ -154,18 +156,20 @@ public class PhotonManager : MonoBehaviourPunCallbacks
             }
             else
             {
-                if(roomDict.ContainsKey(room.Name) == false)
+                if (roomDict.ContainsKey(room.Name) == false)
                 {
+                    string masterClientId = room.CustomProperties["MasterClientId"] as string;
+
                     GameObject originalPrefab = Resources.Load<GameObject>("Prefab/UI/UI_Room");
                     GameObject instance = Instantiate(originalPrefab);
                     instance.transform.SetParent(roomPosition.transform, false);
-                    //instance.
+                    instance.GetComponent<RoomInfo>().CreatRoomInfo(roomDict.Count, room.Name, masterClientId);
+                    Debug.Log("생성 닉네임 : " + masterClientId + " / 방 이름 : " + room.Name);
                     roomDict.Add(room.Name, instance);
                 }
                 else
                 {
                     roomDict.TryGetValue(room.Name, out tempRoom);
-                    //tempRoom.Get
                 }
             }
         }
@@ -173,6 +177,12 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
     public void JoinRoom()
     {
+        if (userId == "")
+        {
+            userId = "User_" + Random.Range(0, 100);
+        }
+
+        PhotonNetwork.NickName = userId;
         PhotonNetwork.JoinRoom("room_1");
     }
 
@@ -180,8 +190,15 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.IsMasterClient)
         {
-            PlayManager.pm_instance.ChangeRole(PlayerRole.Master);       
+            PlayManager.pm_instance.ChangeRole(PlayerRole.Master);
             PhotonNetwork.LoadLevel("PlayScene");
         }
+    }
+
+    public void RoomSetting(string nickName, string room)
+    {
+        Debug.Log("방 세팅 실행");
+        userId = nickName;
+        roomName = room;
     }
 }

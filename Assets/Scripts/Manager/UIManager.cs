@@ -1,9 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using EnumStruct;
-using Photon.Pun;
-using Photon.Realtime;
+using TMPro;
 
 public class UIManager : MonoBehaviour
 {
@@ -16,6 +13,8 @@ public class UIManager : MonoBehaviour
     public GameObject uiRoom;
     public GameObject uiPlay;
     public GameObject roomList;
+    public TextMeshProUGUI nickNameText;
+    public TextMeshProUGUI roomNameText;
 
     // Start is called before the first frame update
     void Start()
@@ -71,11 +70,21 @@ public class UIManager : MonoBehaviour
 
     public void CreatRoomButton()
     {
+        string nickName = nickNameText.text != null ? nickNameText.text : "";
+        string roomName = roomNameText.text != null ? roomNameText.text : "";
+
+        Debug.Log("닉네임 : " + nickName + " / 방 이름 : " + roomName);
+        Debug.Log("일치 ? 닉네임 : " + (nickName == "") + " / 방 이름 : " + (roomName == ""));
+
+        PhotonManager.pm_instance.RoomSetting(nickName, roomName);
         PhotonManager.pm_instance.CreatRoom();
     }    
 
     public void JoinRoomButton()
     {
+        string nickName = nickNameText.text == null ? nickNameText.text : "";
+        string roomName = "";
+        PhotonManager.pm_instance.RoomSetting(nickName, roomName);
         PhotonManager.pm_instance.JoinRoom();
     }
 
