@@ -72,18 +72,7 @@ public class UIManager : MonoBehaviour
     public void CreatRoomButton()
     {
         PhotonManager.pm_instance.CreatRoom();
-
-        GameObject originalPrefab = Resources.Load<GameObject>("Prefab/UI_Room");
-        if (originalPrefab != null)
-        {
-            GameObject instance = Instantiate(originalPrefab);
-            instance.transform.SetParent(roomList.transform, false);
-        }
-        else
-        {
-            Debug.LogError("Prefab/UI_Room을 Resources 폴더에서 찾을 수 없습니다.");
-        }
-    }
+    }    
 
     public void JoinRoomButton()
     {

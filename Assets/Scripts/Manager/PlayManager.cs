@@ -2,19 +2,25 @@ using Photon.Pun;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using EnumStruct;
+using UnityEngine.SceneManagement;
 
 public class PlayManager : MonoBehaviour
 {
     public static PlayManager pm_instance;
     private bool isConnect = true;
     public Transform[] spawnPoints;
+    public bool isMyturn = false;
+    public PlayPhase curPhase;
+    public PlayerRole curRole;
 
     private void Awake()
     {
         if (pm_instance == null)
         {
             pm_instance = this;
-            DontDestroyOnLoad(gameObject);
+            //DontDestroyOnLoad(gameObject);
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else if (pm_instance != this)
         {
@@ -24,7 +30,7 @@ public class PlayManager : MonoBehaviour
     void Start()
     {
         Debug.Log("Play Start");
-        CreatePlayer();
+        //CreatePlayer();
     }
 
     void Update()
@@ -62,4 +68,24 @@ public class PlayManager : MonoBehaviour
 
         GameObject playerTemp = PhotonNetwork.Instantiate("Prefab/Player", pos, rot, 0);
     }
+
+    public void ChangePhase(PlayPhase phase)
+    {
+        curPhase = phase;
+    }
+
+    public void ChangeRole(PlayerRole role)
+    {
+        curRole = role;
+    }
+
+    public void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "PlayScene")
+        {
+            Debug.Log("this is playscend");
+        }
+    }
+
+
 }

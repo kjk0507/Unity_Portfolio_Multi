@@ -5,18 +5,22 @@ using System.Collections.Generic;
 using UnityEngine;
 using Photon;
 using EnumStruct;
+using Photon.Pun.Demo.PunBasics;
+using System;
 
 public class PhotonManager : MonoBehaviourPunCallbacks
 {
     public static PhotonManager pm_instance;
+    //private PhotonView photonView;
 
     private readonly string gameVersion = "v1.0";
     private string userId = "tester1";
 
-    public GameObject roomList;
+    public GameObject roomPosition;
     public GameObject roomPrefab;
 
     public List<RoomInfo> roomInfo = new List<RoomInfo>();
+    public Dictionary<string, GameObject> roomDict = new Dictionary<string, GameObject>();
 
     private void Awake()
     {
@@ -28,6 +32,8 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
         // 포톤 엔진 접속 -> 로비에 자동 입장
         PhotonNetwork.ConnectUsingSettings();
+
+        //photonView = GetComponent<PhotonView>();
     }
 
     void Start()
@@ -55,14 +61,16 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     public override void OnConnectedToMaster()
     {
         Debug.Log("00.포톤 서버 접속");
+        Debug.Log("01.포톤 로비 접속");
+        PhotonNetwork.JoinLobby();
 
-        Debug.Log("01.랜덤 룸 접속 시도");
-        PhotonNetwork.JoinRandomRoom();
+        //Debug.Log("01.랜덤 룸 접속 시도");
+        //PhotonNetwork.JoinRandomRoom();
     }
 
     public override void OnJoinRandomFailed(short returnCode, string message)
     {
-        Debug.Log("02.랜덤 룸 접속 실패");
+        Debug.Log("Error.랜덤 룸 접속 실패");
 
         //Debug.Log("03.랜덤 룸 생성");
         //RoomOptions ro = new RoomOptions();
@@ -82,6 +90,20 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     public override void OnJoinedRoom()
     {
         Debug.Log("05.방 입장 완료");
+
+        int playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
+
+        Debug.Log("PlayerCount : " + playerCount);
+
+        if (playerCount == 2)
+        {
+            PlayManager.pm_instance.ChangeRole(PlayerRole.Participant);
+        }
+        else if (playerCount == 3)
+        {
+            PlayManager.pm_instance.ChangeRole(PlayerRole.Spectoator);
+        }
+
         UIManager.um_instance.ChangeUiState(UIState.Room);        
     }
 
@@ -98,6 +120,55 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         ro.MaxPlayers = 10;
 
         PhotonNetwork.CreateRoom("room_1", ro);
+
+        //photonView.RPC("InstantiateRoomUI", RpcTarget.AllBuffered);
+    }
+
+    //[PunRPC]
+    //void InstantiateRoomUI()
+    //{
+    //    GameObject originalPrefab = Resources.Load<GameObject>("Prefab/UI/UI_Room");
+    //    if (originalPrefab != null)
+    //    {
+    //        GameObject instance = Instantiate(originalPrefab);
+    //        instance.transform.SetParent(roomList.transform, false);
+    //    }
+    //    else
+    //    {
+    //        Debug.LogError("Prefab/UI_Room을 Resources 폴더에서 찾을 수 없습니다.");
+    //    }
+    //}
+
+    public override void OnRoomListUpdate(List<RoomInfo> roomList)
+    {
+        Debug.Log("생성된 방의 수 : " + roomList.Count);
+
+        GameObject tempRoom = null;
+        foreach(var room in roomList)
+        {
+            if(room.RemovedFromList == true)
+            {
+                roomDict.TryGetValue(room.Name, out tempRoom);
+                Destroy(tempRoom);
+                roomDict.Remove(room.Name);
+            }
+            else
+            {
+                if(roomDict.ContainsKey(room.Name) == false)
+                {
+                    GameObject originalPrefab = Resources.Load<GameObject>("Prefab/UI/UI_Room");
+                    GameObject instance = Instantiate(originalPrefab);
+                    instance.transform.SetParent(roomPosition.transform, false);
+                    //instance.
+                    roomDict.Add(room.Name, instance);
+                }
+                else
+                {
+                    roomDict.TryGetValue(room.Name, out tempRoom);
+                    //tempRoom.Get
+                }
+            }
+        }
     }
 
     public void JoinRoom()
@@ -109,8 +180,8 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.IsMasterClient)
         {
+            PlayManager.pm_instance.ChangeRole(PlayerRole.Master);       
             PhotonNetwork.LoadLevel("PlayScene");
-            //PlayManager.pm_instance.ChangeConnectState();
         }
     }
 }
