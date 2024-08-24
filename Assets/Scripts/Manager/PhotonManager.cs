@@ -20,6 +20,8 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     public List<RoomInfo> roomInfo = new List<RoomInfo>();
     public Dictionary<string, GameObject> roomDict = new Dictionary<string, GameObject>();
 
+    public string clickedRoomName;
+
     private void Awake()
     {
         // 방장이 씬 로딩시 나머지 사람들이 자동으로 싱크
@@ -112,14 +114,14 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
     public void CreatRoom()
     {
-        Debug.Log("방 생성시 아이디 : " + (userId == "") + " 방 이름 : " + (roomName == ""));
+        //Debug.Log("방 생성시 아이디 : " + (userId == "") + " 방 이름 : " + (roomName == ""));
 
-        if (userId == "")
+        if (userId == "" || userId == null)
         {
             userId = "User_" + Random.Range(0, 100);
         }
 
-        if(roomName == "")
+        if(roomName == "" || roomName == null)
         {
             roomName = "Room_" + Random.Range(0, 100);
         }
@@ -128,6 +130,8 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         {
             { "MasterClientId", userId }
         };
+
+        //Debug.Log("방 생성 아이디 : " + userId + " 방 이름 : " + roomName);
 
         RoomOptions ro = new RoomOptions();
         ro.IsOpen = true;
@@ -164,7 +168,7 @@ public class PhotonManager : MonoBehaviourPunCallbacks
                     GameObject instance = Instantiate(originalPrefab);
                     instance.transform.SetParent(roomPosition.transform, false);
                     instance.GetComponent<RoomInfo>().CreatRoomInfo(roomDict.Count, room.Name, masterClientId);
-                    Debug.Log("생성 닉네임 : " + masterClientId + " / 방 이름 : " + room.Name);
+                    //Debug.Log("생성 닉네임 : " + masterClientId + " / 방 이름 : " + room.Name);
                     roomDict.Add(room.Name, instance);
                 }
                 else
@@ -177,13 +181,18 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
     public void JoinRoom()
     {
+        if(clickedRoomName == null || clickedRoomName == "")
+        {
+            return;
+        }
+
         if (userId == "")
         {
             userId = "User_" + Random.Range(0, 100);
         }
 
         PhotonNetwork.NickName = userId;
-        PhotonNetwork.JoinRoom("room_1");
+        PhotonNetwork.JoinRoom(clickedRoomName);
     }
 
     public void GameStart()
@@ -200,5 +209,21 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         Debug.Log("방 세팅 실행");
         userId = nickName;
         roomName = room;
+    }
+
+    public void ClickRoom(string roomname)
+    {
+        if(clickedRoomName == roomname)
+        {
+            if (userId == "")
+            {
+                userId = "User_" + Random.Range(0, 100);
+            }
+
+            PhotonNetwork.NickName = userId;
+            PhotonNetwork.JoinRoom(roomname);
+        }
+
+        clickedRoomName = roomname;
     }
 }

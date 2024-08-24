@@ -18,24 +18,29 @@ public class RoomInfo : MonoBehaviour
     {
         if(roomNum != null)
         {
-            ui_roomNumText.text = roomNum;
+            ui_roomNumText.text = "No.0" + roomNum;
         }
 
         if(roomName != null)
         {
-            ui_roomNameText.text = roomName;
+            ui_roomNameText.text = "방 이름 : " + roomName;
         }
 
         if(masterNickName != null)
         {
-            ui_masterNickNameText.text= masterNickName;
+            ui_masterNickNameText.text= "방장 : " + masterNickName;
         }
     }
 
     public void CreatRoomInfo(int num, string room, string masterNick)
     {
-        roomNum = "No.0" + num.ToString();
-        roomName = "방 이름 : " + room;
-        masterNickName = "방장 : " + masterNick;
+        roomNum = num.ToString();
+        roomName = room;
+        masterNickName = masterNick;
+    }
+
+    public void ClickRoom()
+    {
+        PhotonManager.pm_instance.ClickRoom(roomName);
     }
 }

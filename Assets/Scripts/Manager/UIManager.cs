@@ -70,11 +70,14 @@ public class UIManager : MonoBehaviour
 
     public void CreatRoomButton()
     {
-        string nickName = nickNameText.text != null ? nickNameText.text : "";
-        string roomName = roomNameText.text != null ? roomNameText.text : "";
+        //Debug.Log("생성 버튼 닉네임 : " + (nickNameText.text == "") + " / 방 이름 : " + (roomNameText.text == ""));
+        //Debug.Log("닉네임 텍스트: '" + nickNameText.text.Trim().Length + "'");
 
-        Debug.Log("닉네임 : " + nickName + " / 방 이름 : " + roomName);
-        Debug.Log("일치 ? 닉네임 : " + (nickName == "") + " / 방 이름 : " + (roomName == ""));
+        string nickName = nickNameText.text.Trim().Length >= 2 ? nickNameText.text.Trim() : "";
+        string roomName = roomNameText.text.Trim().Length >= 2 ? roomNameText.text.Trim() : "";
+
+        //Debug.Log("닉네임 : " + nickName + " / 방 이름 : " + roomName);
+        //Debug.Log("일치 ? 닉네임 : " + (nickName == "") + " / 방 이름 : " + (roomName == ""));
 
         PhotonManager.pm_instance.RoomSetting(nickName, roomName);
         PhotonManager.pm_instance.CreatRoom();
@@ -82,9 +85,9 @@ public class UIManager : MonoBehaviour
 
     public void JoinRoomButton()
     {
-        string nickName = nickNameText.text == null ? nickNameText.text : "";
+        string nickName = nickNameText.text.Trim().Length >= 2 ? nickNameText.text : "";
         string roomName = "";
-        PhotonManager.pm_instance.RoomSetting(nickName, roomName);
+        //PhotonManager.pm_instance.RoomSetting(nickName, roomName);
         PhotonManager.pm_instance.JoinRoom();
     }
 

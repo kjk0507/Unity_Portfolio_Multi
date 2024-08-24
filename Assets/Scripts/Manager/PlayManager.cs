@@ -13,6 +13,7 @@ public class PlayManager : MonoBehaviour
     public bool isMyturn = false;
     public PlayPhase curPhase;
     public PlayerRole curRole;
+    public GameObject cameraObject;
 
     private void Awake()
     {
@@ -83,7 +84,28 @@ public class PlayManager : MonoBehaviour
     {
         if (scene.name == "PlayScene")
         {
+            cameraObject = GameObject.FindWithTag("MainCamera");
+
+
             Debug.Log("this is playscend");
+            ChangeView();
+        }
+    }
+
+    public void ChangeView()
+    {        
+        if (curRole == PlayerRole.Master)
+        {
+
+        }
+        else if (curRole == PlayerRole.Participant)
+        {
+            cameraObject.transform.position = new Vector3(0f, 13f, 2.5f);
+
+            Quaternion currentRotation = cameraObject.transform.rotation;
+            Vector3 eulerRotation = currentRotation.eulerAngles;
+            eulerRotation.z = 180f;
+            cameraObject.transform.rotation = Quaternion.Euler(eulerRotation);
         }
     }
 
