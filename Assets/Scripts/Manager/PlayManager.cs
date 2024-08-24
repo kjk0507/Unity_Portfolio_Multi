@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using EnumStruct;
 using UnityEngine.SceneManagement;
+using UnityEngine.Experimental.GlobalIllumination;
 
 public class PlayManager : MonoBehaviour
 {
@@ -14,6 +15,7 @@ public class PlayManager : MonoBehaviour
     public PlayPhase curPhase;
     public PlayerRole curRole;
     public GameObject cameraObject;
+    public GameObject lightObject;
 
     private void Awake()
     {
@@ -85,7 +87,7 @@ public class PlayManager : MonoBehaviour
         if (scene.name == "PlayScene")
         {
             cameraObject = GameObject.FindWithTag("MainCamera");
-
+            lightObject = GameObject.FindWithTag("DirectionalLight"); 
 
             Debug.Log("this is playscend");
             ChangeView();
@@ -100,12 +102,18 @@ public class PlayManager : MonoBehaviour
         }
         else if (curRole == PlayerRole.Participant)
         {
-            cameraObject.transform.position = new Vector3(0f, 13f, 2.5f);
+            cameraObject.transform.position = new Vector3(0f, 13f, 17f);
 
             Quaternion currentRotation = cameraObject.transform.rotation;
             Vector3 eulerRotation = currentRotation.eulerAngles;
+            eulerRotation.x = 140f;
             eulerRotation.z = 180f;
             cameraObject.transform.rotation = Quaternion.Euler(eulerRotation);
+
+            Quaternion currentLightRotation = lightObject.transform.rotation;
+            Vector3 eulerLightRotation = currentLightRotation.eulerAngles;
+            eulerLightRotation.y = 150f;
+            lightObject.transform.rotation = Quaternion.Euler(eulerLightRotation);
         }
     }
 
