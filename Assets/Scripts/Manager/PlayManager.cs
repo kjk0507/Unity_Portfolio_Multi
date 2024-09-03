@@ -5,17 +5,23 @@ using UnityEngine;
 using EnumStruct;
 using UnityEngine.SceneManagement;
 using UnityEngine.Experimental.GlobalIllumination;
+using UnitStruct;
 
 public class PlayManager : MonoBehaviour
 {
     public static PlayManager pm_instance;
     private bool isConnect = true;
     public Transform[] spawnPoints;
-    public bool isMyturn = false;
+    public bool isMyturn = true;
+
     public PlayPhase curPhase;
     public PlayerRole curRole;
+
     public GameObject cameraObject;
     public GameObject lightObject;
+
+    public GameObject checkedObject;
+    public bool isMakePlatform = false;
 
     private void Awake()
     {
@@ -38,7 +44,8 @@ public class PlayManager : MonoBehaviour
 
     void Update()
     {
-
+        CheckClickUnit();
+        //CheckUnitGo();
     }
 
     public void ChangeConnectState()
@@ -117,5 +124,80 @@ public class PlayManager : MonoBehaviour
         }
     }
 
+    public PlayerRole CheckCurRole()
+    {
+        return curRole;
+    }
 
+    public PlayPhase CheckCurPhase()
+    {
+        return curPhase;
+    }
+
+    public void CheckClickUnit()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            // 나중에 파란색 이동 패널 클릭도 감지해야함
+            GameObject clickedObject;
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit))
+            {                
+                clickedObject = hit.collider.gameObject;
+
+                Debug.Log("click : " +  clickedObject.name);
+
+                int playerUnit = 0;
+                int blueUnit = LayerMask.NameToLayer("BlueUnit");
+                int redUnit = LayerMask.NameToLayer("BlueUnit");
+
+                if (curRole == PlayerRole.Master)
+                {
+                    playerUnit = blueUnit;
+                }
+                else if (curRole == PlayerRole.Participant)
+                {
+                    playerUnit = redUnit;
+                }
+
+                if (clickedObject.layer == playerUnit)
+                {
+                    checkedObject = clickedObject;
+                    Debug.Log("checkedObject : " + checkedObject.name);
+                    
+                }
+                else
+                {
+                    checkedObject = null;
+                }
+            }
+            else
+            {
+                checkedObject = null;
+            }
+
+            CheckUnitGo();
+        }
+    }
+
+    public void CheckUnitGo()
+    {
+        if (isMyturn && checkedObject != null)
+        {
+            Position curPosition = checkedObject.GetComponent<UnitState>().status.GetPosition();
+            //isMakePlatform = true;
+            if(curPosition.x != -5 && curPosition.y != -5)
+            {
+                UnitManager.um_instance.PositionCheck(curPosition);                
+            }
+        }
+
+        if(checkedObject == null)
+        {
+            //isMakePlatform = false;
+            UnitManager.um_instance.ClearPositionLapping();
+        }
+    }
 }

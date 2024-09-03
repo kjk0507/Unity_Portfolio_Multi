@@ -80,7 +80,7 @@ public class UIManager : MonoBehaviour
         //Debug.Log("일치 ? 닉네임 : " + (nickName == "") + " / 방 이름 : " + (roomName == ""));
 
         PhotonManager.pm_instance.RoomSetting(nickName, roomName);
-        PhotonManager.pm_instance.CreatRoom();
+        PhotonManager.pm_instance.CreateRoom();
     }    
 
     public void JoinRoomButton()

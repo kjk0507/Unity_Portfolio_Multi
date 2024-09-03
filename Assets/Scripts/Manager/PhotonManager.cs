@@ -1,4 +1,3 @@
-
 using System.Collections.Generic;
 using Photon.Pun;
 using UnityEngine;
@@ -19,6 +18,9 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
     public List<RoomInfo> roomInfo = new List<RoomInfo>();
     public Dictionary<string, GameObject> roomDict = new Dictionary<string, GameObject>();
+
+    public GameObject roomInfoObject;
+    public GameObject roomGameStartButton;
 
     public string clickedRoomName;
 
@@ -64,6 +66,8 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         Debug.Log("01.포톤 로비 접속");
         PhotonNetwork.JoinLobby();
 
+        UIManager.um_instance.ChangeUiState(UIState.Lobby);
+
         //Debug.Log("01.랜덤 룸 접속 시도");
         //PhotonNetwork.JoinRandomRoom();
     }
@@ -105,6 +109,13 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         }
 
         UIManager.um_instance.ChangeUiState(UIState.Room);
+
+        if (!PhotonNetwork.IsMasterClient)
+        {
+            roomInfoObject.GetComponent<RoomInfo>().CheckParticipant(userId);
+            roomInfoObject.GetComponent<RoomInfo>().CheckRefresh();
+            roomGameStartButton.SetActive(false);
+        }
     }
 
     public override void OnCreateRoomFailed(short returnCode, string message)
@@ -112,7 +123,7 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         Debug.LogError($"Error.방 생성 실패: {message}");
     }
 
-    public void CreatRoom()
+    public void CreateRoom()
     {
         //Debug.Log("방 생성시 아이디 : " + (userId == "") + " 방 이름 : " + (roomName == ""));
 
@@ -143,6 +154,9 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         PhotonNetwork.NickName = userId;
 
         PhotonNetwork.CreateRoom(roomName, ro);
+
+        roomInfoObject.GetComponent<RoomInfo>().ChangeRoomInfo(roomName, userId);
+        roomInfoObject.GetComponent<RoomInfo>().CheckRefresh();
     }
 
     public override void OnRoomListUpdate(List<Photon.Realtime.RoomInfo> roomList)
@@ -167,7 +181,9 @@ public class PhotonManager : MonoBehaviourPunCallbacks
                     GameObject originalPrefab = Resources.Load<GameObject>("Prefab/UI/UI_Room");
                     GameObject instance = Instantiate(originalPrefab);
                     instance.transform.SetParent(roomPosition.transform, false);
-                    instance.GetComponent<RoomInfo>().CreatRoomInfo(roomDict.Count, room.Name, masterClientId);
+                    instance.GetComponent<CreateRoomInfo>().CreatRoomInfo(roomDict.Count, room.Name, masterClientId);
+                    roomInfoObject.GetComponent<RoomInfo>().ChangeRoomInfo(room.Name, masterClientId);
+                    roomInfoObject.GetComponent<RoomInfo>().CheckRefresh();
                     //Debug.Log("생성 닉네임 : " + masterClientId + " / 방 이름 : " + room.Name);
                     roomDict.Add(room.Name, instance);
                 }
@@ -177,6 +193,20 @@ public class PhotonManager : MonoBehaviourPunCallbacks
                 }
             }
         }
+    }
+
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        Debug.Log("새로운 플레이어가 방에 들어왔습니다: " + newPlayer.NickName);
+        roomInfoObject.GetComponent<RoomInfo>().CheckParticipant(newPlayer.NickName);
+        roomInfoObject.GetComponent<RoomInfo>().CheckRefresh();
+    }
+
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        Debug.Log("플레이어가 방을 떠났습니다: " + otherPlayer.NickName);
+        roomInfoObject.GetComponent<RoomInfo>().CheckParticipant("");
+        roomInfoObject.GetComponent<RoomInfo>().CheckRefresh();
     }
 
     public void JoinRoom()
@@ -192,6 +222,9 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         }
 
         PhotonNetwork.NickName = userId;
+
+        roomInfoObject.GetComponent<RoomInfo>().CheckParticipant(userId);
+        roomInfoObject.GetComponent<RoomInfo>().CheckRefresh();
         PhotonNetwork.JoinRoom(clickedRoomName);
     }
 

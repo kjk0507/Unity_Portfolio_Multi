@@ -28,4 +28,16 @@ namespace EnumStruct
         MoveUnit,  // 유닛 이동
         TurnEnd,   // 턴 종료
     }
+
+    public enum UnitType
+    {
+        Royalty,
+        Knight,
+    }
+
+    public enum PlayerDefine
+    {
+        Blue,
+        Red
+    }
 }
