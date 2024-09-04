@@ -93,7 +93,7 @@ public class UnitManager : MonoBehaviour
                 foreach (var obj in redUnitList)
                 {
                     Position temp = obj.GetComponent<UnitState>().status.GetPosition();
-                    if (temp.x == position.x && temp.y == position.z)
+                    if (temp.x == position.x && temp.y == position.z / 1.5)
                     {
                         return false;
                     }
@@ -111,6 +111,7 @@ public class UnitManager : MonoBehaviour
         for(int i = 0; i < 4; i++)
         {
             GameObject instance = Instantiate(bluePrefab);
+            instance.GetComponent<TileState>().status = new Status(-5, -5);
             instance.SetActive(false);
             blueList.Add(instance);
         }
@@ -145,6 +146,7 @@ public class UnitManager : MonoBehaviour
         {
             instantiatePosition = new Vector3(positionRight.x, 0, positionRight.y * 1.5f);
             instanceRight.SetActive(true);
+            instanceRight.GetComponent<TileState>().status.SetPosition(positionRight.x, positionRight.y);
             instanceRight.transform.position = instantiatePosition;
             //GameObject instance = Instantiate(bluePrefab, instantiatePosition, Quaternion.identity);
             //blueList.Add(instance);
@@ -158,6 +160,7 @@ public class UnitManager : MonoBehaviour
         {
             instantiatePosition = new Vector3(positionLeft.x, 0, positionLeft.y * 1.5f);
             instanceLeft.SetActive(true);
+            instanceLeft.GetComponent<TileState>().status.SetPosition(positionLeft.x, positionLeft.y);
             instanceLeft.transform.position = instantiatePosition;
             //GameObject instance = Instantiate(bluePrefab, instantiatePosition, Quaternion.identity);
             //blueList.Add(instance);
@@ -171,6 +174,7 @@ public class UnitManager : MonoBehaviour
         {
             instantiatePosition = new Vector3(positionUp.x, 0, positionUp.y * 1.5f);
             instanceUp.SetActive(true);
+            instanceUp.GetComponent<TileState>().status.SetPosition(positionUp.x, positionUp.y);
             instanceUp.transform.position = instantiatePosition;
             //GameObject instance = Instantiate(bluePrefab, instantiatePosition, Quaternion.identity);
             //blueList.Add(instance);
@@ -184,6 +188,7 @@ public class UnitManager : MonoBehaviour
         {
             instantiatePosition = new Vector3(positionDown.x, 0, positionDown.y * 1.5f);
             instanceDown.SetActive(true);
+            instanceDown.GetComponent<TileState>().status.SetPosition(positionDown.x, positionDown.y);
             instanceDown.transform.position = instantiatePosition;
             //GameObject instance = Instantiate(bluePrefab, instantiatePosition, Quaternion.identity);
             //blueList.Add(instance);
@@ -322,6 +327,104 @@ public class UnitManager : MonoBehaviour
                 unit.GetComponent<UnitState>().status = new Status(PlayerDefine.Red, UnitType.Knight);
             }
             redUnitList.Add(unit);
+        }
+    }
+
+    public void ResetUnitPositionAndCreate()
+    {
+        foreach(var obj in blueUnitList)
+        {
+            Destroy(obj);
+        }
+
+        foreach (var obj in redUnitList)
+        {
+            Destroy(obj);
+        }
+
+        blueUnitList = new List<GameObject>();
+        redUnitList = new List<GameObject>();
+
+        CreateUnit();
+    }
+
+    public bool CheckAllUnitPosition()
+    {
+        bool result = true;
+
+        PlayerRole curRole = PlayManager.pm_instance.CheckCurRole();
+
+        if(curRole == PlayerRole.Master)
+        {
+            foreach(var obj in blueUnitList)
+            {
+                Position temp = obj.GetComponent<UnitState>().status.GetPosition();
+                if(temp.x == -5 || temp.y == -5)
+                {
+                    return false;
+                }
+            }
+        }
+        else if(curRole == PlayerRole.Participant)
+        {
+            foreach (var obj in redUnitList)
+            {
+                Position temp = obj.GetComponent<UnitState>().status.GetPosition();
+                if (temp.x == -5 || temp.y == -5)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public List<Position> GetBlueUnitPositionList()
+    {
+        List<Position> result = new List<Position>();
+        foreach (var obj in blueUnitList)
+        {
+            Position tempPosition = obj.GetComponent<UnitState>().status.GetPosition();
+            result.Add(tempPosition);
+        }
+
+        return result;
+    }
+
+    public void SetBlueUnitList(List<Position> list)
+    {
+        for(int i = 0; i < blueUnitList.Count; i++)
+        {
+            GameObject temp = blueUnitList[i];
+            Position listPosition = list[i];
+
+            temp.transform.position = new Vector3(listPosition.x, 0, listPosition.y * 1.5f);
+            temp.GetComponent<UnitState>().status.SetPosition(listPosition.x, listPosition.y);
+        }
+    }
+
+    public List <Position> GetRedUnitPositionList()
+    {
+        List<Position> result = new List<Position>();
+        foreach (var obj in redUnitList)
+        {
+            Position tempPosition = obj.GetComponent<UnitState>().status.GetPosition();
+            result.Add(tempPosition);
+        }
+
+        return result;
+    }
+
+    public void SetRedUnitList(List<Position> list)
+    {
+        for (int i = 0; i < redUnitList.Count; i++)
+        {
+            GameObject temp = redUnitList[i];
+            Position listPosition = list[i];
+
+            temp.transform.position = new Vector3(listPosition.x, 0, listPosition.y * 1.5f);
+            temp.GetComponent<UnitState>().status.SetPosition(listPosition.x, listPosition.y);
         }
     }
 }

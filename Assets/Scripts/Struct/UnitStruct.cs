@@ -23,6 +23,12 @@ namespace UnitStruct
             positionY = -5;
         }
 
+        public Status(int x, int y)
+        {
+            positionX = x;
+            positionY = y;
+        }
+
         public Position GetPosition()
         {
             return new Position(positionX, positionY);
@@ -60,6 +66,7 @@ namespace UnitStruct
         }
     }
 
+    [System.Serializable]
     public class Position
     {
         public int x;

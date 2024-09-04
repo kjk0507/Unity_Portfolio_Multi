@@ -1,6 +1,9 @@
 using UnityEngine;
 using EnumStruct;
 using TMPro;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using Photon.Pun.Demo.PunBasics;
 
 public class UIManager : MonoBehaviour
 {
@@ -16,6 +19,11 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI nickNameText;
     public TextMeshProUGUI roomNameText;
 
+    public bool isPlayScene = false;
+    public GameObject checkUnitPosition;
+    public Button readyButton;
+    public Button resetButton;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -23,6 +31,7 @@ public class UIManager : MonoBehaviour
         if (um_instance == null)
         {
             um_instance = this;
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else if (um_instance != this)
         {
@@ -33,7 +42,7 @@ public class UIManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        CheckReadyButton();
     }
     public void ChangeUiState(UIState state)
     {
@@ -94,5 +103,80 @@ public class UIManager : MonoBehaviour
     public void GameStartButton()
     {
         PhotonManager.pm_instance.GameStart();
+    }
+    public void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "PlayScene")
+        {
+            isPlayScene = true;
+
+            checkUnitPosition = GameObject.Find("CheckUnitPosition");
+            readyButton = GameObject.Find("GetReady").GetComponent<Button>();
+            resetButton = GameObject.Find("GetWaiting").GetComponent<Button>();
+
+            if (readyButton != null)
+            {
+                readyButton.onClick.AddListener(GetReady);
+            }
+
+            if (resetButton != null)
+            {
+                resetButton.onClick.AddListener(GetWaiting);
+            }
+        }
+    }
+
+    public void CheckReadyButton()
+    {
+        if(!isPlayScene || PlayManager.pm_instance.CheckCurPhase() != PlayPhase.UnitPlacement)
+        {
+            return;
+        }
+
+        //Button readyButton = GameObject.Find("GetReady").GetComponent<Button>();
+        Image buttonImage = readyButton.GetComponent<Image>();
+
+        if (UnitManager.um_instance.CheckAllUnitPosition())
+        {
+            buttonImage.color = new Color(1f, 1f, 1f);
+        }
+        else
+        {
+            buttonImage.color = new Color(0.5f, 0.5f, 0.5f);
+        }
+
+    }
+
+    public void GetReady()
+    {
+        if (!UnitManager.um_instance.CheckAllUnitPosition())
+        {
+            return;
+        }
+
+        if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Master)
+        {
+            PlayManager.pm_instance.blueReady = true;            
+        } else if(PlayManager.pm_instance.CheckCurRole() == PlayerRole.Participant)
+        {
+            PlayManager.pm_instance.redReady = true;
+        }
+
+        PhotonManager.pm_instance.GetReady();
+    }
+
+    public void GetWaiting()
+    {
+        if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Master)
+        {
+            PlayManager.pm_instance.blueReady = false;
+        }
+        else if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Participant)
+        {
+            PlayManager.pm_instance.redReady = false;
+        }
+
+        UnitManager.um_instance.ResetUnitPositionAndCreate();
+        PhotonManager.pm_instance.GetWaiting();
     }
 }

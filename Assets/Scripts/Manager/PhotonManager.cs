@@ -4,6 +4,9 @@ using UnityEngine;
 using Photon.Realtime;
 using EnumStruct;
 using ExitGames.Client.Photon;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using UnitStruct;
 
 public class PhotonManager : MonoBehaviourPunCallbacks
 {
@@ -51,6 +54,9 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
         Debug.Log("포톤 매니저 시작");
         PhotonNetwork.NickName = userId;
+
+        // 커스텀 타입 사용을 등록
+        RegisterCustomTypes();
     }
 
     // Update is called once per frame
@@ -258,5 +264,88 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         }
 
         clickedRoomName = roomname;
+    }
+    public void GetReady()
+    {
+        photonView.RPC("OnGetReady", RpcTarget.Others);
+    }
+
+    [PunRPC]
+    public void OnGetReady()
+    {
+        if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Master)
+        {
+            PlayManager.pm_instance.redReady = true;
+        }
+        else if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Participant)
+        {
+            PlayManager.pm_instance.blueReady = true;
+        }
+    }
+
+    public void GetWaiting()
+    {
+        photonView.RPC("OnGetWaiting", RpcTarget.Others);
+    }
+
+    [PunRPC]
+    public void OnGetWaiting()
+    {
+        if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Master)
+        {
+            PlayManager.pm_instance.redReady = false;
+        }
+        else if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Participant)
+        {
+            PlayManager.pm_instance.blueReady = false;
+        }
+    }
+
+    private void RegisterCustomTypes()
+    {
+        PhotonPeer.RegisterType(typeof(Position), (byte)0, SerializePosition, DeserializePosition);
+    }
+
+    private static byte[] SerializePosition(object customObject)
+    {
+        Position pos = (Position)customObject;
+        using (MemoryStream memStream = new MemoryStream())
+        {
+            BinaryFormatter binaryFormatter = new BinaryFormatter();
+            binaryFormatter.Serialize(memStream, pos);
+            return memStream.ToArray();
+        }
+    }
+
+    private static object DeserializePosition(byte[] data)
+    {
+        using (MemoryStream memStream = new MemoryStream(data))
+        {
+            BinaryFormatter binaryFormatter = new BinaryFormatter();
+            return (Position)binaryFormatter.Deserialize(memStream);
+        }
+    }
+
+    public void GetGameStart()
+    {
+        Position[] bluePositions = UnitManager.um_instance.GetBlueUnitPositionList().ToArray();
+        Position[] redPositions = UnitManager.um_instance.GetRedUnitPositionList().ToArray();
+        photonView.RPC("OnGetGameStart", RpcTarget.Others, bluePositions, redPositions);
+    }
+
+    [PunRPC]
+    public void OnGetGameStart(Position[] blueUnitPositionArray, Position[] redUnitPositionArray)
+    {
+        List<Position> blueUnitPositionList = new List<Position>(blueUnitPositionArray);
+        List<Position> redUnitPositionList = new List<Position>(redUnitPositionArray);
+
+        if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Master)
+        {
+            UnitManager.um_instance.SetRedUnitList(redUnitPositionList);
+        }
+        else if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Participant)
+        {
+            UnitManager.um_instance.SetBlueUnitList(blueUnitPositionList);
+        }
     }
 }

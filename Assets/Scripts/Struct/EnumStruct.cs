@@ -22,6 +22,7 @@ namespace EnumStruct
 
     public enum PlayPhase
     {
+        None,
         UnitPlacement, // 유닛 배치 -> 처음 한번만 실행
         TurnStart, // 턴 시작
         UsingItem, // 아이템 사용 페이즈

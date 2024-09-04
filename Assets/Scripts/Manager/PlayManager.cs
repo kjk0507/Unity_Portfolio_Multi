@@ -12,7 +12,7 @@ public class PlayManager : MonoBehaviour
     public static PlayManager pm_instance;
     private bool isConnect = true;
     public Transform[] spawnPoints;
-    public bool isMyturn = true;
+    public bool isMyturn = false;
 
     public PlayPhase curPhase;
     public PlayerRole curRole;
@@ -22,6 +22,11 @@ public class PlayManager : MonoBehaviour
 
     public GameObject checkedObject;
     public bool isMakePlatform = false;
+
+    public Position targetPosition;
+
+    public bool blueReady = false;
+    public bool redReady = false;
 
     private void Awake()
     {
@@ -46,6 +51,7 @@ public class PlayManager : MonoBehaviour
     {
         CheckClickUnit();
         //CheckUnitGo();
+        CheckBothReady();
     }
 
     public void ChangeConnectState()
@@ -66,18 +72,18 @@ public class PlayManager : MonoBehaviour
     //    // playerTemp = PhotonNetwork.Instantiate("Prefab/Player", Vector3.one, Quaternion.identity, 0);
     //}
 
-    public void CreatePlayer()
-    {
-        Debug.Log("플레이어 생성");
-        //GameObject playerTemp = PhotonNetwork.Instantiate("Prefab/Player", Vector3.one, Quaternion.identity, 0);
+    //public void CreatePlayer()
+    //{
+    //    Debug.Log("플레이어 생성");
+    //    //GameObject playerTemp = PhotonNetwork.Instantiate("Prefab/Player", Vector3.one, Quaternion.identity, 0);
 
-        spawnPoints = GameObject.Find("SpawnPointGroup").GetComponentsInChildren<Transform>();
+    //    spawnPoints = GameObject.Find("SpawnPointGroup").GetComponentsInChildren<Transform>();
 
-        Vector3 pos = spawnPoints[PhotonNetwork.CurrentRoom.PlayerCount].position;
-        Quaternion rot = spawnPoints[PhotonNetwork.CurrentRoom.PlayerCount].rotation;
+    //    Vector3 pos = spawnPoints[PhotonNetwork.CurrentRoom.PlayerCount].position;
+    //    Quaternion rot = spawnPoints[PhotonNetwork.CurrentRoom.PlayerCount].rotation;
 
-        GameObject playerTemp = PhotonNetwork.Instantiate("Prefab/Player", pos, rot, 0);
-    }
+    //    GameObject playerTemp = PhotonNetwork.Instantiate("Prefab/Player", pos, rot, 0);
+    //}
 
     public void ChangePhase(PlayPhase phase)
     {
@@ -94,7 +100,8 @@ public class PlayManager : MonoBehaviour
         if (scene.name == "PlayScene")
         {
             cameraObject = GameObject.FindWithTag("MainCamera");
-            lightObject = GameObject.FindWithTag("DirectionalLight"); 
+            lightObject = GameObject.FindWithTag("DirectionalLight");
+            ChangePhase(PlayPhase.UnitPlacement);
 
             Debug.Log("this is playscend");
             ChangeView();
@@ -152,6 +159,7 @@ public class PlayManager : MonoBehaviour
                 int playerUnit = 0;
                 int blueUnit = LayerMask.NameToLayer("BlueUnit");
                 int redUnit = LayerMask.NameToLayer("BlueUnit");
+                int moveUnit = LayerMask.NameToLayer("MoveUnit");
 
                 if (curRole == PlayerRole.Master)
                 {
@@ -165,8 +173,13 @@ public class PlayManager : MonoBehaviour
                 if (clickedObject.layer == playerUnit)
                 {
                     checkedObject = clickedObject;
-                    Debug.Log("checkedObject : " + checkedObject.name);
-                    
+                    Debug.Log("checkedObject : " + checkedObject.name);                    
+                }
+                else if(checkedObject != null && clickedObject.layer == moveUnit)
+                {
+                    // 오브젝트가 등록된 상태 -> moveUnit 클릭한 경우
+
+
                 }
                 else
                 {
@@ -200,4 +213,35 @@ public class PlayManager : MonoBehaviour
             UnitManager.um_instance.ClearPositionLapping();
         }
     }
+
+    // 페이즈 별 상황 -> 각 페이즈가 끝난 후엔 포톤으로 통신해서 변경 사항을 알려 줘야됨
+    // UnitPlacement 유닛 배치 -> 처음 한번만 실행
+    // TurnStart     턴 시작
+    // UsingItem     아이템 사용 페이즈
+    // MoveUnit      유닛 이동
+    // TurnEnd       턴 종료
+
+    // UnitPlaceMent -> UI에서 준비완료를 누른 후 두개 다 true 인 경우 종료
+    public void CheckBothReady()
+    {
+        if(blueReady && redReady)
+        {
+            ChangePhase(PlayPhase.TurnStart);
+
+            blueReady = false;
+            redReady = false;
+
+            PhotonManager.pm_instance.GetGameStart();
+
+            if(curRole == PlayerRole.Master)
+            {
+                isMyturn = true;
+            }
+            else
+            {
+                isMyturn= false;
+            }
+        }
+    }
+
 }
