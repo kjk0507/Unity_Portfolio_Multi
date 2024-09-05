@@ -348,4 +348,18 @@ public class PhotonManager : MonoBehaviourPunCallbacks
             UnitManager.um_instance.SetBlueUnitList(blueUnitPositionList);
         }
     }
+
+    public void MoveUnit(string name, Position targetPosition, string targetName)
+    {
+        Vector3 temp = new Vector3(targetPosition.x, 0, targetPosition.y);
+
+        photonView.RPC("OnMoveUnit", RpcTarget.Others, name, temp, targetName);
+    }
+
+    [PunRPC]
+    public void OnMoveUnit(string name, Vector3 targetPosition, string targetName)
+    {
+        Position temp = new Position((int)targetPosition.x, (int)targetPosition.z);
+        UnitManager.um_instance.MoveUnit(name, temp, targetName);
+    }
 }

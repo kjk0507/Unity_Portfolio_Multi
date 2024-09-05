@@ -41,4 +41,12 @@ namespace EnumStruct
         Blue,
         Red
     }
+
+    public enum UnitAnimation
+    {
+        Idle, // 기본
+        Walk, // 이동
+        Attack,  // 공격
+        Death,   // 사망
+    }
 }

@@ -8,14 +8,16 @@ namespace UnitStruct
 {
     public class Status
     {
+        public string name;
         public PlayerDefine define; // 아군 / 적군
         public UnitType type; // 왕족 / 기사
         public bool isHide;  // true : 정체 안 밝혀짐 / false : 정체 밝혀짐
         public int positionX;
         public int positionY;
 
-        public Status(PlayerDefine playerDefine, UnitType unitType)
+        public Status(string name, PlayerDefine playerDefine, UnitType unitType)
         {
+            this.name = name;
             define = playerDefine;
             type = unitType;
             isHide = true;
@@ -38,6 +40,16 @@ namespace UnitStruct
         {
             this.positionX = x;
             this.positionY = y;
+        }
+
+        public string GetName()
+        {
+            return name;
+        }
+
+        public void SetName(string name)
+        {
+            this.name = name;
         }
 
         public void ChangeHide()

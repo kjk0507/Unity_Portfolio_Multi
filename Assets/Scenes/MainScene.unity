@@ -2356,6 +2356,11 @@ MonoBehaviour:
   lightObject: {fileID: 0}
   checkedObject: {fileID: 0}
   isMakePlatform: 0
+  targetPosition:
+    x: 0
+    y: 0
+  blueReady: 0
+  redReady: 0
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -2505,8 +2510,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdfbdf30868378d4996813fcd29943ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerUnitList: []
-  enemyUnitList: []
+  blueList: []
+  tileList: []
+  bluePlaceLocation: []
+  redPlaceLocation: []
+  blueUnitList: []
+  redUnitList: []
 --- !u!1 &1218094723
 GameObject:
   m_ObjectHideFlags: 0
@@ -2801,6 +2810,10 @@ MonoBehaviour:
   roomList: {fileID: 1982271186}
   nickNameText: {fileID: 150057450}
   roomNameText: {fileID: 350895647}
+  isPlayScene: 0
+  checkUnitPosition: {fileID: 0}
+  readyButton: {fileID: 0}
+  resetButton: {fileID: 0}
 --- !u!1 &1609016191
 GameObject:
   m_ObjectHideFlags: 0

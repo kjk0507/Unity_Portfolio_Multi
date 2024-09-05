@@ -179,4 +179,9 @@ public class UIManager : MonoBehaviour
         UnitManager.um_instance.ResetUnitPositionAndCreate();
         PhotonManager.pm_instance.GetWaiting();
     }
+
+    public void HiddingReadyButton()
+    {
+        checkUnitPosition.SetActive(false);
+    }
 }

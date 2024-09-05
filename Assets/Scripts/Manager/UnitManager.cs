@@ -15,6 +15,7 @@ public class UnitManager : MonoBehaviour
     public List<GameObject> bluePlaceLocation = new List<GameObject>();
     public List<GameObject> redPlaceLocation = new List<GameObject>();
 
+    public List<GameObject> itemList = new List<GameObject>();
     public List<GameObject> blueUnitList = new List<GameObject>();
     public List<GameObject> redUnitList = new List<GameObject>();
 
@@ -112,6 +113,7 @@ public class UnitManager : MonoBehaviour
         {
             GameObject instance = Instantiate(bluePrefab);
             instance.GetComponent<TileState>().status = new Status(-5, -5);
+            instance.GetComponent<TileState>().status.SetName("MoveUnit");
             instance.SetActive(false);
             blueList.Add(instance);
         }
@@ -141,10 +143,18 @@ public class UnitManager : MonoBehaviour
         GameObject instanceUp = blueList[2];
         GameObject instanceDown = blueList[3];
 
+        // 상단에 있어야 클릭이 쉬우므로 좌표 수정, 높이를 3으로 변경
         // 좌표상 y는 길이가 1.5배이므로 변경 계산
         if (!CheckLapping(positionRight))
         {
-            instantiatePosition = new Vector3(positionRight.x, 0, positionRight.y * 1.5f);
+            if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Master)
+            {
+                instantiatePosition = new Vector3(positionRight.x, 3f, -3.5f + positionRight.y * 1.5f);
+            }
+            else if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Participant)
+            {
+                instantiatePosition = new Vector3(positionRight.x, 3f, 3.5f + positionRight.y * 1.5f);
+            }
             instanceRight.SetActive(true);
             instanceRight.GetComponent<TileState>().status.SetPosition(positionRight.x, positionRight.y);
             instanceRight.transform.position = instantiatePosition;
@@ -158,7 +168,15 @@ public class UnitManager : MonoBehaviour
 
         if (!CheckLapping(positionLeft))
         {
-            instantiatePosition = new Vector3(positionLeft.x, 0, positionLeft.y * 1.5f);
+            if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Master)
+            {
+                instantiatePosition = new Vector3(positionLeft.x, 3f, -3.5f + positionLeft.y * 1.5f);
+            }
+            else if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Participant)
+            {
+                instantiatePosition = new Vector3(positionLeft.x, 3f, 3.5f + positionLeft.y * 1.5f);
+            }
+
             instanceLeft.SetActive(true);
             instanceLeft.GetComponent<TileState>().status.SetPosition(positionLeft.x, positionLeft.y);
             instanceLeft.transform.position = instantiatePosition;
@@ -171,8 +189,15 @@ public class UnitManager : MonoBehaviour
         }
 
         if (!CheckLapping(positionUp))
-        {
-            instantiatePosition = new Vector3(positionUp.x, 0, positionUp.y * 1.5f);
+        {            
+            if(PlayManager.pm_instance.CheckCurRole() == PlayerRole.Master)
+            {
+                instantiatePosition = new Vector3(positionUp.x, 3f, -3.5f + positionUp.y * 1.5f);
+            } else if(PlayManager.pm_instance.CheckCurRole() == PlayerRole.Participant)
+            {
+                instantiatePosition = new Vector3(positionUp.x, 3f, 3.5f + positionUp.y * 1.5f);
+            }
+            
             instanceUp.SetActive(true);
             instanceUp.GetComponent<TileState>().status.SetPosition(positionUp.x, positionUp.y);
             instanceUp.transform.position = instantiatePosition;
@@ -186,7 +211,14 @@ public class UnitManager : MonoBehaviour
 
         if (!CheckLapping(positionDown))
         {
-            instantiatePosition = new Vector3(positionDown.x, 0, positionDown.y * 1.5f);
+            if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Master)
+            {
+                instantiatePosition = new Vector3(positionDown.x, 3f, -3.5f + positionDown.y * 1.5f);
+            }
+            else if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Participant)
+            {
+                instantiatePosition = new Vector3(positionDown.x, 3f, 3.5f + positionDown.y * 1.5f);
+            }
             instanceDown.SetActive(true);
             instanceDown.GetComponent<TileState>().status.SetPosition(positionDown.x, positionDown.y);
             instanceDown.transform.position = instantiatePosition;
@@ -245,10 +277,10 @@ public class UnitManager : MonoBehaviour
         GameObject blueRoyalty2 = Resources.Load<GameObject>("Prefab/Unit/King_Blue");
         GameObject blueRoyalty3 = Resources.Load<GameObject>("Prefab/Unit/Princess_Blue");
         GameObject blueRoyalty4 = Resources.Load<GameObject>("Prefab/Unit/Queen_Blue");
-        GameObject blueKnight1 = Resources.Load<GameObject>("Prefab/Unit/Solider_Blue");
-        GameObject blueKnight2 = Resources.Load<GameObject>("Prefab/Unit/Solider_Blue");
-        GameObject blueKnight3 = Resources.Load<GameObject>("Prefab/Unit/Solider_Blue");
-        GameObject blueKnight4 = Resources.Load<GameObject>("Prefab/Unit/Solider_Blue");
+        GameObject blueKnight1 = Resources.Load<GameObject>("Prefab/Unit/Knight_Blue");
+        GameObject blueKnight2 = Resources.Load<GameObject>("Prefab/Unit/Knight_Blue");
+        GameObject blueKnight3 = Resources.Load<GameObject>("Prefab/Unit/Knight_Blue");
+        GameObject blueKnight4 = Resources.Load<GameObject>("Prefab/Unit/Knight_Blue");
 
         List<GameObject> bluelist = new List<GameObject> { blueRoyalty1, blueRoyalty2, blueRoyalty3, blueRoyalty4, blueKnight1, blueKnight2, blueKnight3, blueKnight4 };
 
@@ -264,6 +296,11 @@ public class UnitManager : MonoBehaviour
             new Vector3(-1, 0, -8.5f),
         };
 
+        List<string> blueUnitNames = new List<string>
+        {
+            "Prince_Blue", "King_Blue", "Princess_Blue", "Queen_Blue", "Knight_Blue1", "Knight_Blue2", "Knight_Blue3", "Knight_Blue4"
+        };
+
         for (int i = 0; i < bluelist.Count; i++)
         {
             // 포지션은 놓아진 뒤에 정해짐
@@ -271,11 +308,11 @@ public class UnitManager : MonoBehaviour
             GameObject unit = Instantiate(bluelist[i], bluePositions[i], Quaternion.identity);
             if(i < 4)
             {
-                unit.GetComponent<UnitState>().status = new Status(PlayerDefine.Blue, UnitType.Royalty);
+                unit.GetComponent<UnitState>().status = new Status(blueUnitNames[i], PlayerDefine.Blue, UnitType.Royalty);
             }
             else
             {
-                unit.GetComponent<UnitState>().status = new Status(PlayerDefine.Blue, UnitType.Knight);
+                unit.GetComponent<UnitState>().status = new Status(blueUnitNames[i], PlayerDefine.Blue, UnitType.Knight);
             }
 
             blueUnitList.Add(unit);
@@ -285,10 +322,10 @@ public class UnitManager : MonoBehaviour
         GameObject redRoyalty2 = Resources.Load<GameObject>("Prefab/Unit/King_Red");
         GameObject redRoyalty3 = Resources.Load<GameObject>("Prefab/Unit/Princess_Red");
         GameObject redRoyalty4 = Resources.Load<GameObject>("Prefab/Unit/Queen_Red");
-        GameObject redKnight1 = Resources.Load<GameObject>("Prefab/Unit/Solider_Red");
-        GameObject redKnight2 = Resources.Load<GameObject>("Prefab/Unit/Solider_Red");
-        GameObject redKnight3 = Resources.Load<GameObject>("Prefab/Unit/Solider_Red");
-        GameObject redKnight4 = Resources.Load<GameObject>("Prefab/Unit/Solider_Red");
+        GameObject redKnight1 = Resources.Load<GameObject>("Prefab/Unit/Knight_Red");
+        GameObject redKnight2 = Resources.Load<GameObject>("Prefab/Unit/Knight_Red");
+        GameObject redKnight3 = Resources.Load<GameObject>("Prefab/Unit/Knight_Red");
+        GameObject redKnight4 = Resources.Load<GameObject>("Prefab/Unit/Knight_Red");
         //redRoyalty1.GetComponent<UnitState>().status = new Status(PlayerDefine.Red, UnitType.Royalty);
         //redRoyalty2.GetComponent<UnitState>().status = new Status(PlayerDefine.Red, UnitType.Royalty);
         //redRoyalty3.GetComponent<UnitState>().status = new Status(PlayerDefine.Red, UnitType.Royalty);
@@ -312,6 +349,11 @@ public class UnitManager : MonoBehaviour
             new Vector3(1, 0, 8.5f),
         };
 
+        List<string> redUnitNames = new List<string>
+        {
+            "Prince_Red", "King_Red", "Princess_Red", "Queen_Red", "Knight_Red1", "Knight_Red2", "Knight_Red3", "Knight_Red4"
+        };
+
         for (int i = 0; i < redlist.Count; i++)
         {
             // 포지션은 놓아진 뒤에 정해짐
@@ -320,11 +362,11 @@ public class UnitManager : MonoBehaviour
             GameObject unit = Instantiate(redlist[i], redPositions[i], rotation);
             if (i < 4)
             {
-                unit.GetComponent<UnitState>().status = new Status(PlayerDefine.Red, UnitType.Royalty);
+                unit.GetComponent<UnitState>().status = new Status(redUnitNames[i], PlayerDefine.Red, UnitType.Royalty);
             }
             else
             {
-                unit.GetComponent<UnitState>().status = new Status(PlayerDefine.Red, UnitType.Knight);
+                unit.GetComponent<UnitState>().status = new Status(redUnitNames[i], PlayerDefine.Red, UnitType.Knight);
             }
             redUnitList.Add(unit);
         }
@@ -402,6 +444,20 @@ public class UnitManager : MonoBehaviour
             temp.transform.position = new Vector3(listPosition.x, 0, listPosition.y * 1.5f);
             temp.GetComponent<UnitState>().status.SetPosition(listPosition.x, listPosition.y);
         }
+
+        foreach (var obj in blueUnitList)
+        {
+            Vector3 currentRotation = obj.transform.eulerAngles;
+            currentRotation.y += 180;
+            obj.transform.eulerAngles = currentRotation;
+        }
+
+        foreach (var obj in redUnitList)
+        {
+            Vector3 currentRotation = obj.transform.eulerAngles;
+            currentRotation.y += 180;
+            obj.transform.eulerAngles = currentRotation;
+        }
     }
 
     public List <Position> GetRedUnitPositionList()
@@ -425,6 +481,93 @@ public class UnitManager : MonoBehaviour
 
             temp.transform.position = new Vector3(listPosition.x, 0, listPosition.y * 1.5f);
             temp.GetComponent<UnitState>().status.SetPosition(listPosition.x, listPosition.y);
+        }
+
+        foreach (var obj in blueUnitList)
+        {
+            Vector3 currentRotation = obj.transform.eulerAngles;
+            currentRotation.y += 180;
+            obj.transform.eulerAngles = currentRotation;
+        }
+
+        foreach (var obj in redUnitList)
+        {
+            Vector3 currentRotation = obj.transform.eulerAngles;
+            currentRotation.y += 180;
+            obj.transform.eulerAngles = currentRotation;
+        }
+    }
+
+    public GameObject CheckObjByPosition(Position position)
+    {
+        // 아이템 확인
+        foreach (var obj in itemList)
+        {
+            
+        }
+
+        // 블루 유닛 확인
+        foreach (var obj in blueUnitList)
+        {
+            Position temp = obj.GetComponent<UnitState>().status.GetPosition();
+            if(temp.x == position.x && temp.y == position.y)
+            {
+                return obj;
+            }
+        }
+
+        // 레드 유닛 확인
+        foreach (var obj in redUnitList)
+        {
+            Position temp = obj.GetComponent<UnitState>().status.GetPosition();
+            if (temp.x == position.x && temp.y == position.y)
+            {
+                return obj;
+            }
+        }
+
+        return null;
+    }
+
+    public GameObject CheckObjByName(string name)
+    {
+        // 아이템 확인
+        foreach (var obj in itemList)
+        {
+
+        }
+
+        // 블루 유닛 확인
+        foreach (var obj in blueUnitList)
+        {
+            string temp = obj.GetComponent<UnitState>().status.GetName();
+            if (temp == name)
+            {
+                return obj;
+            }
+        }
+
+        // 레드 유닛 확인
+        foreach (var obj in redUnitList)
+        {
+            string temp = obj.GetComponent<UnitState>().status.GetName();
+            if (temp == name)
+            {
+                return obj;
+            }
+        }
+
+        return null;
+    }
+
+    public void MoveUnit(string name, Position targetPosition, string targetName)
+    {
+        if(targetName == null)
+        {
+            // 이름이 없다는건 빈 칸이라는 의미
+            // 움직일 대상 유닛
+            GameObject obj = CheckObjByName(name);
+            obj.GetComponent<UnitState>().MovePosition(targetPosition);
         }
     }
 }

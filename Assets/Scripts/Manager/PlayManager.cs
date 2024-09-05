@@ -158,7 +158,7 @@ public class PlayManager : MonoBehaviour
 
                 int playerUnit = 0;
                 int blueUnit = LayerMask.NameToLayer("BlueUnit");
-                int redUnit = LayerMask.NameToLayer("BlueUnit");
+                int redUnit = LayerMask.NameToLayer("RedUnit");
                 int moveUnit = LayerMask.NameToLayer("MoveUnit");
 
                 if (curRole == PlayerRole.Master)
@@ -178,8 +178,10 @@ public class PlayManager : MonoBehaviour
                 else if(checkedObject != null && clickedObject.layer == moveUnit)
                 {
                     // 오브젝트가 등록된 상태 -> moveUnit 클릭한 경우
-
-
+                    //string unitName = checkedObject.GetComponent<UnitState>().status.GetName();
+                    Position targetPosition = hit.collider.gameObject.GetComponent<TileState>().status.GetPosition();
+                    CheckMoveUnit(targetPosition);
+                    checkedObject = null;
                 }
                 else
                 {
@@ -232,8 +234,9 @@ public class PlayManager : MonoBehaviour
             redReady = false;
 
             PhotonManager.pm_instance.GetGameStart();
+            UIManager.um_instance.HiddingReadyButton();
 
-            if(curRole == PlayerRole.Master)
+            if (curRole == PlayerRole.Master)
             {
                 isMyturn = true;
             }
@@ -244,4 +247,30 @@ public class PlayManager : MonoBehaviour
         }
     }
 
+    // TurnStart     턴 시작
+
+    public void CheckMoveUnit(Position targetPosition)
+    {
+        // 타겟 포지션에 뭔가 있는지 확인
+        GameObject targetObj = UnitManager.um_instance.CheckObjByPosition(targetPosition);
+        
+        if(targetObj != null)
+        {
+            // 아이템이 있다면 습득
+
+
+            // 적이 있다면 공격
+
+            // 도착지라면 게임 끝
+        }
+        else
+        {
+            // 해당 클라이언트 움직임
+            checkedObject.GetComponent<UnitState>().MovePosition(targetPosition);
+            string name = checkedObject.GetComponent<UnitState>().status.GetName();
+
+            // 상대방에게 이동 전달
+            PhotonManager.pm_instance.MoveUnit(name, targetPosition, null);
+        }
+    }
 }

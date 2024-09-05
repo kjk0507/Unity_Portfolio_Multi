@@ -1,8 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnitStruct;
 using EnumStruct;
+using TMPro;
 
 public class UnitState : MonoBehaviour
 {
@@ -15,6 +17,11 @@ public class UnitState : MonoBehaviour
     private bool isDragging = false;
     private int activeTouchId = -1;
 
+    public Animator animator;
+    private bool isMoving = false;
+    private Position targetPosition;
+    public float moveSpeed = 5.0f;
+
     void Start()
     {
         //if (status == null)
@@ -24,6 +31,7 @@ public class UnitState : MonoBehaviour
         //}
 
         originalPosition = transform.position;
+        animator = GetComponent<Animator>();
     }
 
     // Update is called once per frame
@@ -36,8 +44,10 @@ public class UnitState : MonoBehaviour
         }
 
         CheckInputType();
+        CheckMoving();
     }
 
+    // ----------------------------------  입력  ---------------------------------- //
     public void CheckInputType()
     {
         if (Input.touchCount > 0)
@@ -73,14 +83,6 @@ public class UnitState : MonoBehaviour
         {
             OnMouseUp();
         }
-    }
-
-    public void MovePosition()
-    {
-        Position position = this.status.GetPosition();
-        Vector3 target = new Vector3(position.x, position.y, 0);
-        transform.LookAt(target);
-        transform.position = target;
     }
 
     // 초기 말 배치
@@ -147,10 +149,11 @@ public class UnitState : MonoBehaviour
         if (Physics.Raycast(ray, out hit) && hit.transform == transform)
         {
             PlayerRole player = PlayManager.pm_instance.CheckCurRole();
+            PlayPhase curPhase = PlayManager.pm_instance.CheckCurPhase();
             int blueUnitLayer = LayerMask.NameToLayer("BlueUnit");
             int redUnitLayer = LayerMask.NameToLayer("RedUnit");
 
-            if (player == PlayerRole.Master && hit.transform.gameObject.layer == blueUnitLayer)
+            if (curPhase == PlayPhase.UnitPlacement && player == PlayerRole.Master && hit.transform.gameObject.layer == blueUnitLayer)
             {
                 isDragging = true;
                 originalPosition = transform.position;
@@ -161,7 +164,7 @@ public class UnitState : MonoBehaviour
                     Vector3 mousePosition = ray.GetPoint(distance);
                     offset = originalPosition - mousePosition;
                 }
-            } else if(player == PlayerRole.Participant && hit.transform.gameObject.layer == redUnitLayer)
+            } else if(curPhase == PlayPhase.UnitPlacement && player == PlayerRole.Participant && hit.transform.gameObject.layer == redUnitLayer)
             {
                 isDragging = true;
                 originalPosition = transform.position;
@@ -211,4 +214,43 @@ public class UnitState : MonoBehaviour
             }
         }
     }
+
+    // ----------------------------------  함수  ---------------------------------- //
+    // 유닛 이동
+    public void CheckMoving()
+    {
+        if (isMoving)
+        {
+            Vector3 tempPosition = new Vector3(targetPosition.x, 0, targetPosition.y * 1.5f);
+            transform.position = Vector3.MoveTowards(transform.position, tempPosition, moveSpeed * Time.deltaTime);
+
+            if (Vector3.Distance(transform.position, tempPosition) < 0.1f)
+            {
+                isMoving = false;
+                ChangeAnimation(UnitAnimation.Idle);
+                this.status.SetPosition(targetPosition.x, targetPosition.y);
+            }
+        }
+    }
+
+    public void MovePosition(Position position)
+    {
+        ChangeAnimation(UnitAnimation.Walk); // 걷는 애니메이션 시작
+        UnitManager.um_instance.ClearPositionLapping(); // 이동 타일 삭제
+
+        targetPosition = position;
+        Vector3 temp = new Vector3(position.x, 0, position.y * 1.5f);
+        transform.LookAt(temp); // 목표 지점을 바라봄
+        transform.Rotate(0, 180, 0); // 필요에 따라 회전 조정
+
+        isMoving = true;
+    }
+
+    // 유닛 애니메이션 변경
+    public void ChangeAnimation(UnitAnimation unitState)
+    {
+        animator.SetInteger("UnitState", (int)unitState);
+    }
+
+    
 }
