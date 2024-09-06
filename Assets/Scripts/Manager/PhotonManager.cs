@@ -7,6 +7,7 @@ using ExitGames.Client.Photon;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnitStruct;
+using TMPro;
 
 public class PhotonManager : MonoBehaviourPunCallbacks
 {
@@ -326,6 +327,17 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         }
     }
 
+    // ----------------------------------  RPC  ---------------------------------- //
+    public Vector3 ChangePositionToVector(Position postion)
+    {
+        return new Vector3(postion.x, 0, postion.y);
+    }
+
+    public Position ChangeVectorToPosition(Vector3 vector)
+    {
+        return new Position((int)vector.x, (int)vector.z);
+    }
+
     public void GetGameStart()
     {
         Position[] bluePositions = UnitManager.um_instance.GetBlueUnitPositionList().ToArray();
@@ -349,17 +361,44 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         }
     }
 
-    public void MoveUnit(string name, Position targetPosition, string targetName)
+    public void MoveUnit(Position curPosition, Position targetPosition)
     {
-        Vector3 temp = new Vector3(targetPosition.x, 0, targetPosition.y);
-
-        photonView.RPC("OnMoveUnit", RpcTarget.Others, name, temp, targetName);
+        Vector3 curTemp = ChangePositionToVector(curPosition);
+        Vector3 TarTemp = ChangePositionToVector(targetPosition);
+        photonView.RPC("OnMoveUnit", RpcTarget.Others, curTemp, TarTemp);
     }
 
     [PunRPC]
-    public void OnMoveUnit(string name, Vector3 targetPosition, string targetName)
+    public void OnMoveUnit(Vector3 curTemp, Vector3 tarTemp)
     {
-        Position temp = new Position((int)targetPosition.x, (int)targetPosition.z);
-        UnitManager.um_instance.MoveUnit(name, temp, targetName);
+        Position curPosition = ChangeVectorToPosition(curTemp);
+        Position tarPosition = ChangeVectorToPosition(tarTemp);
+        UnitManager.um_instance.MoveUnit(curPosition, tarPosition);
     }
+
+    public void AttackUnit(Position curPosition, Position targetPosition)
+    {
+        Vector3 curTemp = ChangePositionToVector(curPosition);
+        Vector3 tarTemp = ChangePositionToVector(targetPosition);
+        photonView.RPC("OnAttackUnit", RpcTarget.Others, curTemp, tarTemp);
+    }
+
+    [PunRPC]
+    public void OnAttackUnit(Vector3 curTemp, Vector3 tarTemp)
+    {
+        Position curPosition = ChangeVectorToPosition(curTemp);
+        Position tarPosition = ChangeVectorToPosition(tarTemp);
+        UnitManager.um_instance.AttackUnit(curPosition, tarPosition);
+    }
+
+    //public void ChangeTrun()
+    //{
+    //    photonView.RPC("OnChangeTrun", RpcTarget.Others);
+    //}
+
+    //[PunRPC]
+    //public void OnChangeTrun()
+    //{
+    //    PlayManager.pm_instance.ChangeTurn();
+    //}
 }

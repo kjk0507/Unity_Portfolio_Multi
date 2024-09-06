@@ -19,6 +19,10 @@ public class UnitManager : MonoBehaviour
     public List<GameObject> blueUnitList = new List<GameObject>();
     public List<GameObject> redUnitList = new List<GameObject>();
 
+    // 사망리스트
+    public List<GameObject> blueDeathUnitList = new List<GameObject>();
+    public List<GameObject> redDeathUnitList = new List<GameObject>();
+
     // 저 경우 카메라를 2개로 나눠서 정 방향이 자신, 반대 방향이 상대방으로 지정
 
     void Start()
@@ -560,14 +564,87 @@ public class UnitManager : MonoBehaviour
         return null;
     }
 
-    public void MoveUnit(string name, Position targetPosition, string targetName)
+    public void ChangeUnitList(GameObject obj)
     {
-        if(targetName == null)
+        PlayerDefine define = obj.GetComponent<UnitState>().status.GetDefine();
+        // 블루라면 블루에서 레드라면 레드에서
+        if (define == PlayerDefine.Blue)
         {
-            // 이름이 없다는건 빈 칸이라는 의미
-            // 움직일 대상 유닛
-            GameObject obj = CheckObjByName(name);
-            obj.GetComponent<UnitState>().MovePosition(targetPosition);
+            blueUnitList.Remove(obj);
+            blueDeathUnitList.Add(obj);
+        }
+        else
+        {
+            redUnitList.Remove(obj);
+            redDeathUnitList.Add(obj);
         }
     }
+
+    public bool CheckEnding()
+    {
+        // 기사가 다 잡혔는지
+        int blueKnight = 0;
+        int redKnight = 0;
+
+        // 왕족이 다 잡혔는지
+        int blueRoyalty = 0;
+        int redRoyalty = 0;        
+
+        foreach (var obj in blueDeathUnitList)
+        {
+            UnitType type = obj.GetComponent<UnitState>().status.GetUnitType();
+            if(type == UnitType.Knight)
+            {
+                blueKnight++;
+            } else if(type == UnitType.Royalty)
+            {
+                blueRoyalty++;
+            }
+        }
+
+        foreach (var obj in redDeathUnitList)
+        {
+            UnitType type = obj.GetComponent<UnitState>().status.GetUnitType();
+            if (type == UnitType.Knight)
+            {
+                redKnight++;
+            }
+            else if (type == UnitType.Royalty)
+            {
+                redRoyalty++;
+            }
+        }
+
+        if(blueKnight == 4 || redKnight == 4) 
+        {
+            return true;
+        }
+
+        if(blueRoyalty == 4 || redRoyalty == 4)
+        {
+            return true;
+        }
+
+        // 왕족이 탈출 했는지 (3,-3) -> 레드 탈출 / (-3, 3) -> 블루 탈출
+
+
+
+
+        return false;
+    }
+
+    // ----------------------------------  Photon 입력 대기  ---------------------------------- //
+    public void MoveUnit(Position curPosition, Position targetPosition)
+    {
+        GameObject obj = CheckObjByPosition(curPosition);
+        obj.GetComponent<UnitState>().MoveUnit(targetPosition);
+    }
+
+    public void AttackUnit(Position curPosition, Position targetPosition)
+    {
+        GameObject obj = CheckObjByPosition(curPosition);
+        obj.GetComponent<UnitState>().AttackUnit(targetPosition);
+    }
+
+    
 }

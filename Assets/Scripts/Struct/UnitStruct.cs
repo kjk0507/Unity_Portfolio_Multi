@@ -12,6 +12,7 @@ namespace UnitStruct
         public PlayerDefine define; // 아군 / 적군
         public UnitType type; // 왕족 / 기사
         public bool isHide;  // true : 정체 안 밝혀짐 / false : 정체 밝혀짐
+        public bool isReflection;
         public int positionX;
         public int positionY;
 
@@ -75,6 +76,16 @@ namespace UnitStruct
         public void SetUnitType(UnitType ut)
         {
             this.type = ut;
+        }
+
+        public bool GetIsReflection()
+        {
+            return isReflection;
+        }
+
+        public void SetIsReflection(bool type)
+        {
+            isReflection = type;
         }
     }
 

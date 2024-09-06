@@ -24,9 +24,7 @@ namespace EnumStruct
     {
         None,
         UnitPlacement, // 유닛 배치 -> 처음 한번만 실행
-        TurnStart, // 턴 시작
-        UsingItem, // 아이템 사용 페이즈
-        MoveUnit,  // 유닛 이동
+        TurnStart, // 턴 시작 -> 아이템 사용 및 유닛 이동 가능
         TurnEnd,   // 턴 종료
     }
 
@@ -39,7 +37,9 @@ namespace EnumStruct
     public enum PlayerDefine
     {
         Blue,
-        Red
+        Red,
+        Item,
+        Goal,
     }
 
     public enum UnitAnimation

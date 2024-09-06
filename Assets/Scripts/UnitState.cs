@@ -5,6 +5,7 @@ using UnityEngine;
 using UnitStruct;
 using EnumStruct;
 using TMPro;
+using UnityEditor;
 
 public class UnitState : MonoBehaviour
 {
@@ -229,12 +230,28 @@ public class UnitState : MonoBehaviour
                 isMoving = false;
                 ChangeAnimation(UnitAnimation.Idle);
                 this.status.SetPosition(targetPosition.x, targetPosition.y);
+
+                // 엔딩 분기인지 확인
+                if (UnitManager.um_instance.CheckEnding())
+                {
+                    return;
+                }
+
+                // 기사가 탈출한 경우
+                if (true)
+                {
+
+                }
+
+                PlayManager.pm_instance.ChangeTurn();
             }
         }
     }
 
-    public void MovePosition(Position position)
+    public void MoveUnit(Position position)
     {
+        PlayManager.pm_instance.IsActionTrue();
+
         ChangeAnimation(UnitAnimation.Walk); // 걷는 애니메이션 시작
         UnitManager.um_instance.ClearPositionLapping(); // 이동 타일 삭제
 
@@ -252,5 +269,63 @@ public class UnitState : MonoBehaviour
         animator.SetInteger("UnitState", (int)unitState);
     }
 
-    
+    public void AttackUnit(Position position)
+    {
+        PlayManager.pm_instance.IsActionTrue();
+
+        Vector3 temp = new Vector3(position.x, 0, position.y * 1.5f);
+        transform.LookAt(temp); // 목표 지점을 바라봄
+        transform.Rotate(0, 180, 0); // 필요에 따라 회전 조정
+        targetPosition = position;
+
+        GameObject targetObj = UnitManager.um_instance.CheckObjByPosition(position);
+        
+        if(targetObj.GetComponent<UnitState>().status.GetIsReflection()) 
+        {
+            // 해당 유닛이 반사 아이템을 사용한 경우
+
+        }
+        else
+        {
+            // 반사 아이템이 없는 경우
+            ChangeAnimation(UnitAnimation.Attack);
+
+            // 당하는 쪽이 자신을 보도록
+            Position curPosition = this.status.GetPosition();
+            Vector3 tempPosition = new Vector3(curPosition.x, 0, curPosition.y * 1.5f);
+            targetObj.transform.LookAt(tempPosition);
+            targetObj.transform.Rotate(0, 180, 0);
+        }        
+    }
+
+    public void DeathUnit(GameObject obj)
+    {
+        obj.GetComponent<UnitState>().ChangeAnimation(UnitAnimation.Death);        
+        UnitManager.um_instance.ChangeUnitList(obj);
+
+        StartCoroutine(WaitingDeath(4f));
+    }
+
+    private IEnumerator WaitingDeath(float delay)
+    {
+        ChangeAnimation(UnitAnimation.Idle);
+
+        yield return new WaitForSeconds(delay);
+        MoveUnit(targetPosition);
+    }
+
+    // ----------------------------------  애니메이션  ---------------------------------- //
+    // 공격모션이 끝난 후(애니메이션에 추가)
+    public void AttackEnd()
+    {
+        GameObject targetObj = UnitManager.um_instance.CheckObjByPosition(targetPosition);        
+
+        DeathUnit(targetObj);
+    }
+
+    // 사망모션이 끝난 후(애니메이션에 추가)
+    public void DeathEnd()
+    {
+        gameObject.SetActive(false);
+    }
 }

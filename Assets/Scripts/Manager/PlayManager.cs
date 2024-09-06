@@ -13,6 +13,7 @@ public class PlayManager : MonoBehaviour
     private bool isConnect = true;
     public Transform[] spawnPoints;
     public bool isMyturn = false;
+    public bool isAction = false; // 이동 / 공격을 했다면 true 아니면 false(클릭 가능)
 
     public PlayPhase curPhase;
     public PlayerRole curRole;
@@ -199,6 +200,12 @@ public class PlayManager : MonoBehaviour
 
     public void CheckUnitGo()
     {
+        if (isAction)
+        {
+            UnitManager.um_instance.ClearPositionLapping();
+            return;
+        }
+
         if (isMyturn && checkedObject != null)
         {
             Position curPosition = checkedObject.GetComponent<UnitState>().status.GetPosition();
@@ -247,7 +254,32 @@ public class PlayManager : MonoBehaviour
         }
     }
 
-    // TurnStart     턴 시작
+    public void ChangeTurn()
+    {
+        if (isMyturn)
+        {
+            isMyturn = false;
+            isAction = true;
+        }
+        else
+        {
+            isMyturn = true;
+            isAction = false;
+        }        
+    }
+
+    public void IsActionTrue()
+    {
+        isAction = true;
+    }
+
+    public void GameEnding()
+    {
+        isMyturn = false;
+        isAction = false;
+    }
+
+    // TurnStart     턴 시작 : 아이템 사용 -> 공격 -> 이동 -> 턴 종료 순서로 작동
 
     public void CheckMoveUnit(Position targetPosition)
     {
@@ -256,21 +288,37 @@ public class PlayManager : MonoBehaviour
         
         if(targetObj != null)
         {
-            // 아이템이 있다면 습득
+            PlayerDefine define = targetObj.GetComponent<UnitState>().status.GetDefine();
 
+            if(define == PlayerDefine.Item)
+            {
+                // 아이템이 있다면 습득
 
-            // 적이 있다면 공격
+            }
+            else if(define == PlayerDefine.Blue || define == PlayerDefine.Red)
+            {
+                // 적이 있다면 공격
+                checkedObject.GetComponent<UnitState>().AttackUnit(targetPosition);
+                Position curPosition = checkedObject.GetComponent<UnitState>().status.GetPosition();
 
-            // 도착지라면 게임 끝
+                // 상대방에게 전달
+                PhotonManager.pm_instance.AttackUnit(curPosition, targetPosition);
+
+            }
+            else if(define == PlayerDefine.Goal)
+            {
+                // 도착지라면 게임 끝
+
+            }
         }
         else
         {
             // 해당 클라이언트 움직임
-            checkedObject.GetComponent<UnitState>().MovePosition(targetPosition);
-            string name = checkedObject.GetComponent<UnitState>().status.GetName();
+            checkedObject.GetComponent<UnitState>().MoveUnit(targetPosition);
+            Position curPosition = checkedObject.GetComponent<UnitState>().status.GetPosition();
 
             // 상대방에게 이동 전달
-            PhotonManager.pm_instance.MoveUnit(name, targetPosition, null);
+            PhotonManager.pm_instance.MoveUnit(curPosition, targetPosition);
         }
     }
 }
