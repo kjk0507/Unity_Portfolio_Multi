@@ -57,7 +57,6 @@ public class UnitManager : MonoBehaviour
         //GameObject[] tileObjects = GameObject.FindGameObjectsWithTag("Tile");
         //tileList = new List<GameObject>(tileObjects);
         GameObject tile = Resources.Load<GameObject>("Prefab/Env/CanGo");
-
     }
 
     public Vector3 GetPosition(Vector3 position)
@@ -241,26 +240,58 @@ public class UnitManager : MonoBehaviour
 
         PlayerRole curRole = PlayManager.pm_instance.CheckCurRole();
 
-        if(curRole == PlayerRole.Master)
+        if (PlayManager.pm_instance.isUseMoveEnemy)
         {
-            foreach (var otherUnit in blueUnitList)
+            if (curRole == PlayerRole.Master)
             {
-                Status otherStatue = otherUnit.GetComponent<UnitState>().status;
-                if ((position.x == otherStatue.positionX && position.y == otherStatue.positionY) || (position.x < -3 || position.x > 3 || position.y < -3 || position.y > 3))
+                foreach (var otherUnit in redUnitList)
                 {
-                    return true;
+                    Status otherStatue = otherUnit.GetComponent<UnitState>().status;
+                    if ((position.x == otherStatue.positionX && position.y == otherStatue.positionY) || (position.x < -3 || position.x > 3 || position.y < -3 || position.y > 3))
+                    {
+                        return true;
+                    }
                 }
             }
-        } else if(curRole == PlayerRole.Participant){
-            foreach (var otherUnit in redUnitList)
+            else if (curRole == PlayerRole.Participant)
             {
-                Status otherStatue = otherUnit.GetComponent<UnitState>().status;
-                if ((position.x == otherStatue.positionX && position.y == otherStatue.positionY) || (position.x < -3 || position.x > 3 || position.y < -3 || position.y > 3))
+                foreach (var otherUnit in blueUnitList)
                 {
-                    return true;
+                    Status otherStatue = otherUnit.GetComponent<UnitState>().status;
+                    if ((position.x == otherStatue.positionX && position.y == otherStatue.positionY) || (position.x < -3 || position.x > 3 || position.y < -3 || position.y > 3))
+                    {
+                        return true;
+                    }
                 }
             }
-        }        
+        }
+        else
+        {
+            if (curRole == PlayerRole.Master)
+            {
+                foreach (var otherUnit in blueUnitList)
+                {
+                    Status otherStatue = otherUnit.GetComponent<UnitState>().status;
+                    if ((position.x == otherStatue.positionX && position.y == otherStatue.positionY) || (position.x < -3 || position.x > 3 || position.y < -3 || position.y > 3))
+                    {
+                        return true;
+                    }
+                }
+            }
+            else if (curRole == PlayerRole.Participant)
+            {
+                foreach (var otherUnit in redUnitList)
+                {
+                    Status otherStatue = otherUnit.GetComponent<UnitState>().status;
+                    if ((position.x == otherStatue.positionX && position.y == otherStatue.positionY) || (position.x < -3 || position.x > 3 || position.y < -3 || position.y > 3))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+              
 
         return result;
     }
@@ -580,6 +611,63 @@ public class UnitManager : MonoBehaviour
         }
     }
 
+    public int CheckDeathUnitCount(UnitType type)
+    {
+        int result = 0;
+
+        if(PlayManager.pm_instance.CheckCurRole() == PlayerRole.Master)
+        {
+            if (type == UnitType.Knight)
+            {
+                foreach(var obj in redDeathUnitList)
+                {
+                    UnitType unitType = obj.GetComponent<UnitState>().status.GetUnitType();
+                    if(unitType == UnitType.Knight)
+                    {
+                        result++;
+                    }
+                }
+            }
+            else if(type == UnitType.Royalty)
+            {
+                foreach (var obj in redDeathUnitList)
+                {
+                    UnitType unitType = obj.GetComponent<UnitState>().status.GetUnitType();
+                    if (unitType == UnitType.Royalty)
+                    {
+                        result++;
+                    }
+                }
+            }
+        } else if(PlayManager.pm_instance.CheckCurRole() == PlayerRole.Participant)
+        {
+            if (type == UnitType.Knight)
+            {
+                foreach (var obj in blueDeathUnitList)
+                {
+                    UnitType unitType = obj.GetComponent<UnitState>().status.GetUnitType();
+                    if (unitType == UnitType.Knight)
+                    {
+                        result++;
+                    }
+                }
+            }
+            else if(type == UnitType.Royalty)
+            {
+                foreach (var obj in blueDeathUnitList)
+                {
+                    UnitType unitType = obj.GetComponent<UnitState>().status.GetUnitType();
+                    if (unitType == UnitType.Royalty)
+                    {
+                        result++;
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
     public bool CheckEnding()
     {
         // 기사가 다 잡혔는지
@@ -615,22 +703,73 @@ public class UnitManager : MonoBehaviour
             }
         }
 
+        // 기사가 다 잡힌 경우
         if(blueKnight == 4 || redKnight == 4) 
         {
             return true;
         }
 
+        // 왕족이 다 잡힌 경우
         if(blueRoyalty == 4 || redRoyalty == 4)
         {
             return true;
         }
 
         // 왕족이 탈출 했는지 (3,-3) -> 레드 탈출 / (-3, 3) -> 블루 탈출
+        // 탈출 지점
+        Position blueGoal = new Position(-3, 3);
+        Position redGoal = new Position(3, -3);
 
+        foreach (var obj in blueUnitList)
+        {
+            UnitType type = obj.GetComponent<UnitState>().status.GetUnitType();
+            PlayerDefine playerDefine = obj.GetComponent<UnitState>().status.GetDefine();
+            Position position = obj.GetComponent<UnitState>().status.GetPosition();
 
+            if (type == UnitType.Royalty && playerDefine == PlayerDefine.Blue && position == blueGoal)
+            {
+                return true;
+            } else if(type == UnitType.Royalty && playerDefine == PlayerDefine.Red && position == redGoal)
+            {
+                return true;
+            }
+        }
 
 
         return false;
+    }
+
+    public bool CheckEmptyPostion(Position point)
+    {
+        bool isEmpty = true;
+
+        foreach (var obj in blueUnitList)
+        {
+            Position temp = obj.GetComponent<UnitState>().status.GetPosition();
+            if(temp == point)
+            {
+                return false;
+            }
+        }
+
+        foreach(var obj in redUnitList)
+        {
+            Position temp = obj.GetComponent<UnitState>().status.GetPosition();
+            if (temp == point)
+            {
+                return false;
+            }
+        }
+
+        Position blueGoal = new Position(-3, 3);
+        Position redGoal = new Position(3, -3);
+
+        if (point == blueGoal || point == redGoal)
+        {
+            return false;
+        }
+
+        return isEmpty;
     }
 
     // ----------------------------------  Photon 입력 대기  ---------------------------------- //

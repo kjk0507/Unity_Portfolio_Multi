@@ -3,7 +3,8 @@ using EnumStruct;
 using TMPro;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using Photon.Pun.Demo.PunBasics;
+using ItemStruct;
+using Unity.VisualScripting;
 
 public class UIManager : MonoBehaviour
 {
@@ -24,7 +25,32 @@ public class UIManager : MonoBehaviour
     public Button readyButton;
     public Button resetButton;
 
-    // Start is called before the first frame update
+    public GameObject turnInfo;
+    public GameObject watingTurn;
+    public GameObject blueTurn;
+    public GameObject redTurn;
+
+    public TextMeshProUGUI knightDeathText;
+    public TextMeshProUGUI royaltyDeathText;
+
+    // 아이템
+    public GameObject bottomLayer;
+    public Button itemButton01;
+    public Button itemButton02;
+    public Button itemButton03;
+    public Button itemButton04;
+
+    public TextMeshProUGUI itemName;
+    public TextMeshProUGUI itemNum;
+    public TextMeshProUGUI itemInfo;
+    public Button itemUse;
+
+    public GameObject checkConfirm;
+    public Button confirmButton;
+    public Button cancelButton;
+
+    public ItemNameNum curClickedItem;    
+
     void Start()
     {
         //uiState = UIState.Title;
@@ -39,11 +65,13 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
     void Update()
     {
         CheckReadyButton();
+        CheckDeathUnit();
+        ChangeTurnImage();
     }
+
     public void ChangeUiState(UIState state)
     {
         switch (state)
@@ -113,6 +141,49 @@ public class UIManager : MonoBehaviour
             checkUnitPosition = GameObject.Find("CheckUnitPosition");
             readyButton = GameObject.Find("GetReady").GetComponent<Button>();
             resetButton = GameObject.Find("GetWaiting").GetComponent<Button>();
+            knightDeathText = GameObject.Find("KnightNum").GetComponent<TextMeshProUGUI>();
+            royaltyDeathText = GameObject.Find("RoyaltyNum").GetComponent<TextMeshProUGUI>();
+
+            // 턴 초기화
+            turnInfo = GameObject.Find("TurnInfo");
+            watingTurn = GameObject.Find("WaitingTurn");
+            blueTurn = GameObject.Find("BlueTurn");
+            redTurn = GameObject.Find("RedTurn");
+
+            watingTurn.SetActive(true);
+            blueTurn.SetActive(false);
+            redTurn.SetActive(false);
+
+            // 아이템 관련
+            bottomLayer = GameObject.Find("Bottom");
+            itemButton01 = GameObject.Find("ItemButton01").GetComponent<Button>();
+            itemButton02 = GameObject.Find("ItemButton02").GetComponent<Button>();
+            itemButton03 = GameObject.Find("ItemButton03").GetComponent<Button>();
+            itemButton04 = GameObject.Find("ItemButton04").GetComponent<Button>();
+            itemName = GameObject.Find("ItemName").GetComponent<TextMeshProUGUI>();
+            itemNum = GameObject.Find("ItemNum").GetComponent<TextMeshProUGUI>();
+            itemInfo = GameObject.Find("ItemInfo").GetComponent<TextMeshProUGUI>();
+            itemUse = GameObject.Find("ItemUse").GetComponent<Button>();
+
+            checkConfirm = GameObject.Find("CheckConfirm");
+            confirmButton = GameObject.Find("ConfirmButton").GetComponent<Button>();
+            cancelButton = GameObject.Find("CancelButton").GetComponent<Button>();
+
+            itemButton01.onClick.AddListener(() => ClickedItemButton(1));
+            itemButton02.onClick.AddListener(() => ClickedItemButton(2));
+            itemButton03.onClick.AddListener(() => ClickedItemButton(3));
+            itemButton04.onClick.AddListener(() => ClickedItemButton(4));
+
+            confirmButton.onClick.AddListener(() => ButtonItemUseConfirm());
+            cancelButton.onClick.AddListener(() => ButtonItemUseCancel());
+
+            curClickedItem = ItemNameNum.ChangePosition;
+            ClickedItemButton(1);
+
+            bottomLayer.SetActive(false);
+            checkConfirm.SetActive(false);
+
+            CreatGoalPosition();
 
             if (readyButton != null)
             {
@@ -183,5 +254,212 @@ public class UIManager : MonoBehaviour
     public void HiddingReadyButton()
     {
         checkUnitPosition.SetActive(false);
+        watingTurn.SetActive(false);
+    }
+
+    public void UncoverItemUI()
+    {
+        bottomLayer.SetActive(true);
+    }
+
+    public void CheckDeathUnit()
+    {
+        if(knightDeathText == null || royaltyDeathText == null)
+        {
+            return;
+        }
+
+        knightDeathText.text = UnitManager.um_instance.CheckDeathUnitCount(UnitType.Knight).ToString();
+        royaltyDeathText.text = UnitManager.um_instance.CheckDeathUnitCount(UnitType.Royalty).ToString();
+    }
+
+    public void CreatGoalPosition()
+    {
+        GameObject leftArrow = Resources.Load<GameObject>("Prefab/UI/Out_Left");
+        GameObject rightArrow = Resources.Load<GameObject>("Prefab/UI/Out_Right");        
+
+        if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Master)
+        {
+            Vector3 topPosition = new Vector3(-3f, 0.15f, 4.3f);
+            Vector3 bottomPosition = new Vector3(3f, 0.15f, -4.65f);
+
+            Quaternion rotation = Quaternion.Euler(90, 0, 0);
+            GameObject leftUnit = Instantiate(leftArrow, topPosition, rotation);
+            GameObject rightUnit = Instantiate(rightArrow, bottomPosition, rotation);
+        }
+        else if (PlayManager.pm_instance.CheckCurRole() == PlayerRole.Participant)
+        {
+            Vector3 topPosition = new Vector3(3f, 0.15f, -4.3f);
+            Vector3 bottomPosition = new Vector3(-3f, 0.15f, 4.65f);
+
+            Quaternion rotation = Quaternion.Euler(90, 180, 0);
+            GameObject leftUnit = Instantiate(leftArrow, topPosition, rotation);
+            GameObject rightUnit = Instantiate(rightArrow, bottomPosition, rotation);
+        }
+    }
+
+    public void ChangeTurnImage()
+    {
+        if (!isPlayScene || PlayManager.pm_instance.CheckCurPhase() == PlayPhase.UnitPlacement)
+        {
+            return;
+        }
+
+        PlayerRole type = PlayManager.pm_instance.CheckCurRole();
+
+        if (type == PlayerRole.Master && PlayManager.pm_instance.isMyturn)
+        {
+            blueTurn.SetActive(true);
+            redTurn.SetActive(false);
+        } else if (type == PlayerRole.Master && !PlayManager.pm_instance.isMyturn)
+        {
+            blueTurn.SetActive(false);
+            redTurn.SetActive(true);
+        }
+
+        if (type == PlayerRole.Participant && PlayManager.pm_instance.isMyturn)
+        {
+            blueTurn.SetActive(false);
+            redTurn.SetActive(true);
+        }
+        else if (type == PlayerRole.Participant && !PlayManager.pm_instance.isMyturn)
+        {
+            blueTurn.SetActive(true);
+            redTurn.SetActive(false);
+        }
+    }
+
+    public void ClickedItemButton(int num)
+    {
+        ItemNameNum temp = (ItemNameNum)num;
+
+        switch (temp)
+        {
+            case ItemNameNum.ChangePosition:
+                itemName.text = "위치 변경";
+                itemNum.text = PlayManager.pm_instance.GetItemNum(ItemNameNum.ChangePosition).ToString();
+                itemInfo.text = "아군 유닛 두 개를 선택하여 위치를 변경합니다.";
+                itemUse.onClick.AddListener(() => ClickedItemUseButton((int)ItemNameNum.ChangePosition));
+                curClickedItem = ItemNameNum.ChangePosition;
+                break; 
+            case ItemNameNum.MoveEnemy:
+                itemName.text = "상대 유닛 이동";
+                itemNum.text = PlayManager.pm_instance.GetItemNum(ItemNameNum.MoveEnemy).ToString();
+                itemInfo.text = "상대 유닛을 강제로 움직이게 합니다.";
+                itemUse.onClick.AddListener(() => ClickedItemUseButton((int)ItemNameNum.MoveEnemy));
+                curClickedItem = ItemNameNum.MoveEnemy;
+                break; 
+            case ItemNameNum.DoubleMove:
+                itemName.text = "2칸 이동";
+                itemNum.text = PlayManager.pm_instance.GetItemNum(ItemNameNum.DoubleMove).ToString();
+                itemInfo.text = "두 칸을 이동할 수 있습니다.";
+                itemUse.onClick.AddListener(() => ClickedItemUseButton((int)ItemNameNum.DoubleMove));
+                curClickedItem = ItemNameNum.DoubleMove;
+                break;
+            case ItemNameNum.Uncover:
+                itemName.text = "정체 확인";
+                itemNum.text = PlayManager.pm_instance.GetItemNum(ItemNameNum.Uncover).ToString();
+                itemInfo.text = "상대 유닛의 정체를 확인할 수 있습니다..";
+                itemUse.onClick.AddListener(() => ClickedItemUseButton((int)ItemNameNum.Uncover));
+                curClickedItem = ItemNameNum.Uncover;
+                break;
+            case ItemNameNum.Bomb:
+                itemName.text = "폭탄";
+                itemNum.text = PlayManager.pm_instance.GetItemNum(ItemNameNum.Bomb).ToString();
+                itemInfo.text = "폭탄을 밟은 플레이어는 턴이 한 번 스킵됩니다. /n(상대방 유저는 보이지 않습니다.)";
+                itemUse.onClick.AddListener(() => ClickedItemUseButton((int)ItemNameNum.Bomb));
+                curClickedItem = ItemNameNum.Bomb;
+                break; 
+        }
+    }
+
+    public void ChangeItemNum(ItemNameNum num)
+    {
+        switch (num)
+        {
+            case ItemNameNum.ChangePosition:
+                if(curClickedItem == ItemNameNum.ChangePosition)
+                {
+                    itemNum.text = PlayManager.pm_instance.GetItemNum(ItemNameNum.ChangePosition).ToString();
+                }
+                break;
+            case ItemNameNum.MoveEnemy:
+                if (curClickedItem == ItemNameNum.MoveEnemy)
+                {
+                    itemNum.text = PlayManager.pm_instance.GetItemNum(ItemNameNum.MoveEnemy).ToString();
+                }
+                break;
+            case ItemNameNum.DoubleMove:
+                if (curClickedItem == ItemNameNum.DoubleMove)
+                {
+                    itemNum.text = PlayManager.pm_instance.GetItemNum(ItemNameNum.DoubleMove).ToString();
+                }
+                break;
+            case ItemNameNum.Uncover:
+                if (curClickedItem == ItemNameNum.Uncover)
+                {
+                    itemNum.text = PlayManager.pm_instance.GetItemNum(ItemNameNum.Uncover).ToString();
+                }
+                break;
+            case ItemNameNum.Bomb:
+                if (curClickedItem == ItemNameNum.Bomb)
+                {
+                    itemNum.text = PlayManager.pm_instance.GetItemNum(ItemNameNum.Bomb).ToString();
+                }
+                break;
+        }
+    }
+
+    public void ClickedItemUseButton(int num)
+    {
+        // 자신턴에만 사용 가능, 아이템은 한턴에 한번만
+        if (!PlayManager.pm_instance.isMyturn || PlayManager.pm_instance.isUseItem)
+        {
+            return;
+        }
+
+        ItemNameNum temp = (ItemNameNum)num;
+
+        if (PlayManager.pm_instance.GetItemNum(temp) <= 0)
+        {
+            return;
+        }
+
+        switch (temp)
+        {
+            case ItemNameNum.ChangePosition:
+                PlayManager.pm_instance.isUseItem = true;
+                checkConfirm.SetActive(true);
+                PlayManager.pm_instance.isUseChangePosition = true;
+                break;
+            case ItemNameNum.MoveEnemy:
+                PlayManager.pm_instance.isUseItem = true;
+                PlayManager.pm_instance.item02--;                
+                PhotonManager.pm_instance.ChangeIsUseMoveEnemy();
+                break;
+            case ItemNameNum.DoubleMove:
+                PlayManager.pm_instance.isUseItem = true;
+                PlayManager.pm_instance.item03--;
+                PhotonManager.pm_instance.ChangeIsUseDoubleMove();
+                break;
+            case ItemNameNum.Uncover:
+                
+                break;
+            case ItemNameNum.Bomb:
+                break;
+        }
+
+        ChangeItemNum(temp);
+    }
+
+    public void ButtonItemUseConfirm()
+    {
+        PlayManager.pm_instance.ChangeUnitPosition();
+    }
+
+    public void ButtonItemUseCancel()
+    {
+        checkConfirm.SetActive(false);
+        PlayManager.pm_instance.ClearChangeUnit();
     }
 }

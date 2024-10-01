@@ -22,12 +22,34 @@ public class PlayManager : MonoBehaviour
     public GameObject lightObject;
 
     public GameObject checkedObject;
+    public GameObject checkedEnemyObject;
     public bool isMakePlatform = false;
 
     public Position targetPosition;
 
     public bool blueReady = false;
     public bool redReady = false;
+
+    // 아이템 생성 관련
+    public int itemTurnCount = 0;
+    public List<GameObject> itemList = new List<GameObject>();
+
+    //public List<GameObject> playerInventory = new List<GameObject>();
+    public bool isUseItem = false; // false일때만 아이템 사용가능, 턴이 돌아오면 false로 변경
+    public bool isUseChangePosition = false;
+    public bool isUseMoveEnemy = false;
+    public bool isUseDoubleMove = false;
+
+    public int item01;
+    public int item02;
+    public int item03;
+    public int item04;
+
+    // 위치변경
+    public GameObject changeUnit01;
+    public GameObject changeUnit02;
+    public GameObject fakeUnit01;
+    public GameObject fakeUnit02;
 
     private void Awake()
     {
@@ -46,6 +68,10 @@ public class PlayManager : MonoBehaviour
     {
         Debug.Log("Play Start");
         //CreatePlayer();
+        item01 = 1;
+        item02 = 1;
+        item03 = 1;
+        item04 = 1;
     }
 
     void Update()
@@ -53,6 +79,7 @@ public class PlayManager : MonoBehaviour
         CheckClickUnit();
         //CheckUnitGo();
         CheckBothReady();
+        CreateItem();
     }
 
     public void ChangeConnectState()
@@ -158,6 +185,7 @@ public class PlayManager : MonoBehaviour
                 Debug.Log("click : " +  clickedObject.name);
 
                 int playerUnit = 0;
+                int enemyUnit = 0;
                 int blueUnit = LayerMask.NameToLayer("BlueUnit");
                 int redUnit = LayerMask.NameToLayer("RedUnit");
                 int moveUnit = LayerMask.NameToLayer("MoveUnit");
@@ -165,16 +193,18 @@ public class PlayManager : MonoBehaviour
                 if (curRole == PlayerRole.Master)
                 {
                     playerUnit = blueUnit;
+                    enemyUnit = redUnit;
                 }
                 else if (curRole == PlayerRole.Participant)
                 {
                     playerUnit = redUnit;
+                    enemyUnit = blueUnit;
                 }
 
-                if (clickedObject.layer == playerUnit)
+                if (clickedObject.layer == playerUnit && !isUseChangePosition)
                 {
                     checkedObject = clickedObject;
-                    Debug.Log("checkedObject : " + checkedObject.name);                    
+                    //Debug.Log("checkedObject : " + checkedObject.name);                    
                 }
                 else if(checkedObject != null && clickedObject.layer == moveUnit)
                 {
@@ -186,27 +216,143 @@ public class PlayManager : MonoBehaviour
                 }
                 else
                 {
-                    checkedObject = null;
+                    checkedObject = null;                    
                 }
+
+                // 위치 변경 아이템을 사용한 경우
+                if(isUseChangePosition)
+                {                
+                    if (clickedObject.layer == playerUnit && changeUnit01 == null)
+                    {
+                        changeUnit01 = clickedObject;
+                        string unitName = clickedObject.GetComponent<UnitState>().status.GetName();
+                        if(unitName == "Knight_Red1" || unitName == "Knight_Red2" || unitName == "Knight_Red3" || unitName == "Knight_Red4")
+                        {
+                            unitName = "Knight_Red";
+                        } 
+                        else if (unitName == "Knight_Blue1" || unitName == "Knight_Blue2" || unitName == "Knight_Blue3" || unitName == "Knight_Blue4")
+                        {
+                            unitName = "Knight_Blue";
+                        }
+
+                        GameObject unit = Resources.Load<GameObject>("Prefab/Unit/Fake/" + unitName);
+                        Quaternion rotation = Quaternion.Euler(40, 0, 0);
+                        Vector3 position = new Vector3(-2.2f, 6.5f, -18f);
+                        fakeUnit01 = Instantiate(unit, position, rotation);
+                    } 
+                    else if (clickedObject.layer == playerUnit && changeUnit01 != null)
+                    {
+                        changeUnit02 = clickedObject;
+                        string unitName = clickedObject.GetComponent<UnitState>().status.GetName();
+                        if (unitName == "Knight_Red1" || unitName == "Knight_Red2" || unitName == "Knight_Red3" || unitName == "Knight_Red4")
+                        {
+                            unitName = "Knight_Red";
+                        }
+                        else if (unitName == "Knight_Blue1" || unitName == "Knight_Blue2" || unitName == "Knight_Blue3" || unitName == "Knight_Blue4")
+                        {
+                            unitName = "Knight_Blue";
+                        }
+
+                        GameObject unit = Resources.Load<GameObject>("Prefab/Unit/Fake/" + unitName);
+                        Quaternion rotation = Quaternion.Euler(40, 0, 0);
+                        Vector3 position = new Vector3(0.4f, 6.5f, -18f);
+                        fakeUnit02 = Instantiate(unit, position, rotation);
+                    }
+                    else
+                    {
+                        //
+                    }
+                }
+
+
+                // 적 유닛 클릭 상황인 경우
+                if (clickedObject.layer == enemyUnit)
+                {
+                    checkedEnemyObject = clickedObject;
+                }
+
+                // 
+                if(isUseMoveEnemy && checkedEnemyObject != null && clickedObject.layer == moveUnit)
+                {
+                    Position targetPosition = hit.collider.gameObject.GetComponent<TileState>().status.GetPosition();
+                    CheckMoveUnit(targetPosition);
+                    checkedEnemyObject = null;
+                }
+
             }
             else
             {
                 checkedObject = null;
+                checkedEnemyObject = null;
             }
 
             CheckUnitGo();
         }
     }
 
+    public void ClearChangeUnit()
+    {
+        isUseChangePosition = false;
+        changeUnit01 = null;
+        changeUnit02 = null;
+        Destroy(fakeUnit01);
+        Destroy(fakeUnit02);
+    }
+
+    public void ChangeUnitPosition()
+    {
+        if(changeUnit01 == null || changeUnit02 == null)
+        {
+            return;
+        }
+
+        Position tempPosition01 = changeUnit01.GetComponent<UnitState>().status.GetPosition();
+        Position tempPosition02 = changeUnit02.GetComponent<UnitState>().status.GetPosition();
+        Vector3 tempVector01 = changeUnit01.transform.position;
+        Vector3 tempVector02 = changeUnit02.transform.position;
+        Quaternion tempRotation01 = changeUnit01.transform.rotation;
+        Quaternion tempRotation02 = changeUnit02.transform.rotation;
+
+        changeUnit01.GetComponent<UnitState>().status.SetPosition(tempPosition02.x, tempPosition02.y);
+        changeUnit02.GetComponent<UnitState>().status.SetPosition(tempPosition01.x, tempPosition01.y);
+        changeUnit01.transform.position = tempVector02;
+        changeUnit02.transform.position = tempVector01;
+        changeUnit01.transform.rotation = tempRotation02;
+        changeUnit02.transform.rotation = tempRotation01;
+
+        PhotonManager.pm_instance.ChangeIsUseChangeUnit(tempPosition01, tempPosition02);
+        UIManager.um_instance.ButtonItemUseCancel();
+    }
+
+    public void ChangeUnitPositionPhoton(Position tempA, Position tempB)
+    {
+        GameObject unit01 = UnitManager.um_instance.CheckObjByPosition(tempA);
+        GameObject unit02 = UnitManager.um_instance.CheckObjByPosition(tempB);
+
+        Position tempPosition01 = unit01.GetComponent<UnitState>().status.GetPosition();
+        Position tempPosition02 = unit02.GetComponent<UnitState>().status.GetPosition();
+        Vector3 tempVector01 = unit01.transform.position;
+        Vector3 tempVector02 = unit02.transform.position;
+        Quaternion tempRotation01 = unit01.transform.rotation;
+        Quaternion tempRotation02 = unit02.transform.rotation;
+
+        unit01.GetComponent<UnitState>().status.SetPosition(tempPosition02.x, tempPosition02.y);
+        unit02.GetComponent<UnitState>().status.SetPosition(tempPosition01.x, tempPosition01.y);
+        unit01.transform.position = tempVector02;
+        unit02.transform.position = tempVector01;
+        unit01.transform.rotation = tempRotation02;
+        unit02.transform.rotation = tempRotation01;
+    }
+
     public void CheckUnitGo()
     {
-        if (isAction)
+        if (isAction || !isMyturn)
         {
             UnitManager.um_instance.ClearPositionLapping();
             return;
         }
 
-        if (isMyturn && checkedObject != null)
+        if (isMyturn && checkedObject != null && !isUseMoveEnemy)
         {
             Position curPosition = checkedObject.GetComponent<UnitState>().status.GetPosition();
             //isMakePlatform = true;
@@ -219,6 +365,16 @@ public class PlayManager : MonoBehaviour
         if(checkedObject == null)
         {
             //isMakePlatform = false;
+            UnitManager.um_instance.ClearPositionLapping();
+        }
+
+        // 상대말 이동 아이템 사용시
+        if(isMyturn && isUseMoveEnemy && checkedEnemyObject != null)
+        {
+            Position curPosition = checkedEnemyObject.GetComponent<UnitState>().status.GetPosition();
+            UnitManager.um_instance.PositionCheck(curPosition);
+        } else if(isMyturn && isUseMoveEnemy && checkedEnemyObject == null)
+        {
             UnitManager.um_instance.ClearPositionLapping();
         }
     }
@@ -242,6 +398,7 @@ public class PlayManager : MonoBehaviour
 
             PhotonManager.pm_instance.GetGameStart();
             UIManager.um_instance.HiddingReadyButton();
+            UIManager.um_instance.UncoverItemUI();
 
             if (curRole == PlayerRole.Master)
             {
@@ -256,6 +413,30 @@ public class PlayManager : MonoBehaviour
 
     public void ChangeTurn()
     {
+        // 더블 아이템 사용시 / 상대 말 위치 이동 아이템 사용시 턴카운트가 넘어가지 않음
+        if (isUseMoveEnemy)
+        {
+            isUseMoveEnemy = false;
+            isAction = false;
+            return;
+        }
+
+        if (isUseDoubleMove)
+        {
+            isUseDoubleMove = false;
+            isAction = false;
+            return;
+        }
+
+        if (itemList.Count < 4)
+        {
+            itemTurnCount++;
+        }
+        else
+        {
+            itemTurnCount = 0;
+        }        
+
         if (isMyturn)
         {
             isMyturn = false;
@@ -265,7 +446,46 @@ public class PlayManager : MonoBehaviour
         {
             isMyturn = true;
             isAction = false;
-        }        
+            isUseItem = false;
+        }
+    }
+
+    public void CreateItem()
+    {
+        if(curRole != PlayerRole.Master)
+        {
+            return;
+        }
+
+        if(itemList.Count > 4 || itemTurnCount < 3)
+        {
+            return;
+        }
+
+        itemTurnCount = 0;
+
+        Position temp;
+
+        do
+        {
+            int randomX = Random.Range(-3, 4);
+            int randomY = Random.Range(-3, 4);
+
+            temp = new Position(randomX, randomY);
+
+        } 
+        while (!UnitManager.um_instance.CheckEmptyPostion(temp));
+
+        CreateItemPosition(temp);
+        PhotonManager.pm_instance.CreatItem(temp);
+    }
+
+    public void CreateItemPosition(Position point)
+    {
+        Vector3 itemPosition = new Vector3(point.x, 0.2f, point.y * 1.5f);
+        GameObject itemPrefab = Resources.Load<GameObject>("Prefab/Env/Item");
+        GameObject item = Instantiate(itemPrefab, itemPosition, Quaternion.identity);
+        itemList.Add(item);
     }
 
     public void IsActionTrue()
@@ -279,10 +499,66 @@ public class PlayManager : MonoBehaviour
         isAction = false;
     }
 
+    public void AddItem()
+    {
+        //GameObject item = null;
+        //playerInventory.Add(item);
+
+        int num = Random.Range(1, 5);
+        ItemNameNum temp = (ItemNameNum)num;
+
+        switch (temp)
+        {
+            case ItemNameNum.ChangePosition:
+                item01++;
+                UIManager.um_instance.ChangeItemNum(ItemNameNum.ChangePosition);
+                break;
+            case ItemNameNum.MoveEnemy:
+                item02++;
+                UIManager.um_instance.ChangeItemNum(ItemNameNum.MoveEnemy);
+                break;
+            case ItemNameNum.DoubleMove:
+                item03++;
+                UIManager.um_instance.ChangeItemNum(ItemNameNum.DoubleMove);
+                break;
+            case ItemNameNum.Uncover:
+                item04++;
+                UIManager.um_instance.ChangeItemNum(ItemNameNum.Uncover);
+                break;
+            //case ItemNameNum.Bomb:
+            //    item05++;
+            //    UIManager.um_instance.ChangeItemNum(ItemNameNum.Bomb);
+            //    break;
+        }
+    }
+
+    public int GetItemNum(ItemNameNum num)
+    {
+        switch(num)
+        {
+            case ItemNameNum.ChangePosition:
+                return item01;
+            case ItemNameNum.MoveEnemy: 
+                return item02;
+            case ItemNameNum.DoubleMove: 
+                return item03;
+            case ItemNameNum.Bomb: 
+                return item04;
+        }
+
+        return 0;
+    }
+
     // TurnStart     턴 시작 : 아이템 사용 -> 공격 -> 이동 -> 턴 종료 순서로 작동
 
     public void CheckMoveUnit(Position targetPosition)
     {
+        // 아이템 사용 여부 확인
+        if(isUseMoveEnemy)
+        {
+            checkedObject = checkedEnemyObject;
+        }
+
         // 타겟 포지션에 뭔가 있는지 확인
         GameObject targetObj = UnitManager.um_instance.CheckObjByPosition(targetPosition);
         
@@ -305,11 +581,12 @@ public class PlayManager : MonoBehaviour
                 PhotonManager.pm_instance.AttackUnit(curPosition, targetPosition);
 
             }
-            else if(define == PlayerDefine.Goal)
-            {
-                // 도착지라면 게임 끝
+            // 끝인지 확인하는건 다른 곳에서 작동
+            //else if(define == PlayerDefine.Goal)
+            //{
+            //    // 도착지라면 게임 끝
 
-            }
+            //}
         }
         else
         {

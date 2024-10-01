@@ -23,14 +23,13 @@ public class UnitState : MonoBehaviour
     private Position targetPosition;
     public float moveSpeed = 5.0f;
 
+    public GameObject robeObj; // 숨김 처리
+    public GameObject unitObj; // 보이는 처리
+
+    public bool isHide = true; // 기본 안보임처리
+
     void Start()
     {
-        //if (status == null)
-        //{
-        //    status = new Status();
-        //    status.SetPosition(0, 0);
-        //}
-
         originalPosition = transform.position;
         animator = GetComponent<Animator>();
     }
@@ -46,6 +45,7 @@ public class UnitState : MonoBehaviour
 
         CheckInputType();
         CheckMoving();
+        CheckHideState();
     }
 
     // ----------------------------------  입력  ---------------------------------- //
@@ -231,16 +231,34 @@ public class UnitState : MonoBehaviour
                 ChangeAnimation(UnitAnimation.Idle);
                 this.status.SetPosition(targetPosition.x, targetPosition.y);
 
+                UnitType type = this.status.GetUnitType();
+                PlayerDefine playerDefine = this.status.GetDefine();
+
+                Position blueGoal = new Position(-3, 3);
+                Position redGoal = new Position(3, -3);
+
+                // 기사가 탈출한 경우 안보이게 설정 -> 단 기사의 경우 나가봐야 승리 못함(오히려 감소)
+                if (type == UnitType.Knight && playerDefine == PlayerDefine.Blue && targetPosition == blueGoal)
+                {
+                    this.status.SetPosition(-10, -10);
+                    gameObject.SetActive(false);
+                    //UnitManager.um_instance.ChangeUnitList(gameObject);
+                }
+
+                if (type == UnitType.Knight && playerDefine == PlayerDefine.Red && targetPosition == redGoal)
+                {
+                    this.status.SetPosition(-10, -10);
+                    gameObject.SetActive(false);
+                    //UnitManager.um_instance.ChangeUnitList(gameObject);
+                }
+
                 // 엔딩 분기인지 확인
                 if (UnitManager.um_instance.CheckEnding())
                 {
+
+
+                    Debug.Log("게임 끝");
                     return;
-                }
-
-                // 기사가 탈출한 경우
-                if (true)
-                {
-
                 }
 
                 PlayManager.pm_instance.ChangeTurn();
@@ -290,6 +308,9 @@ public class UnitState : MonoBehaviour
             // 반사 아이템이 없는 경우
             ChangeAnimation(UnitAnimation.Attack);
 
+            // 하이드 해제
+            targetObj.GetComponent<UnitState>().isHide = false;
+
             // 당하는 쪽이 자신을 보도록
             Position curPosition = this.status.GetPosition();
             Vector3 tempPosition = new Vector3(curPosition.x, 0, curPosition.y * 1.5f);
@@ -327,5 +348,65 @@ public class UnitState : MonoBehaviour
     public void DeathEnd()
     {
         gameObject.SetActive(false);
+    }
+
+    // 자기 자신에게는 보이지만 상대에겐 안보임
+    public void CheckHideState()
+    {
+        PlayerRole curRole = PlayManager.pm_instance.CheckCurRole();
+        PlayerDefine curDefine = this.status.GetDefine();
+
+        // 자신이 마스터인 경우(블루)
+        if (curRole == PlayerRole.Master)
+        {
+            // 빨강 유닛이면 하이드
+            if(curDefine == PlayerDefine.Red)
+            {
+                if(isHide)
+                {
+                    // 하이드 상태인 경우 숨김
+                    unitObj.SetActive(false);
+                    robeObj.SetActive(true);
+                }
+                else
+                {
+                    // 아닌 경우 보임
+                    unitObj.SetActive(true);
+                    robeObj.SetActive(false);
+                }
+            }
+
+            // 파랑 유닛이면 하이드 해제
+            if (curDefine == PlayerDefine.Blue)
+            {
+                unitObj.SetActive(true);
+                robeObj.SetActive(false);
+            }
+
+        }
+
+        if (curRole == PlayerRole.Participant)
+        {
+            if (curDefine == PlayerDefine.Red)
+            {
+                unitObj.SetActive(true);
+                robeObj.SetActive(false);
+            }
+
+            if (curDefine == PlayerDefine.Blue)
+            {
+                if (isHide)
+                {
+                    unitObj.SetActive(false);
+                    robeObj.SetActive(true);
+                }
+                else
+                {
+                    unitObj.SetActive(true);
+                    robeObj.SetActive(false);
+                }
+            }
+
+        }
     }
 }

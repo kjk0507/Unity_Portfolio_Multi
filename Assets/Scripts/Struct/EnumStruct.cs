@@ -49,4 +49,14 @@ namespace EnumStruct
         Attack,  // 공격
         Death,   // 사망
     }
+
+    public enum ItemNameNum
+    {
+        None,
+        ChangePosition,
+        MoveEnemy,
+        DoubleMove,
+        Uncover,
+        Bomb,
+    }
 }

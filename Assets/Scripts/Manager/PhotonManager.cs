@@ -391,6 +391,56 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         UnitManager.um_instance.AttackUnit(curPosition, tarPosition);
     }
 
+    public void CreatItem(Position position)
+    {
+        Vector3 curTemp = ChangePositionToVector(position);
+        photonView.RPC("OnCreatItem", RpcTarget.Others, curTemp);
+    }
+
+    [PunRPC]
+    public void OnCreatItem(Vector3 curTemp)
+    {
+        Position curPosition = ChangeVectorToPosition(curTemp);
+        PlayManager.pm_instance.CreateItemPosition(curPosition);
+    }
+
+    public void ChangeIsUseMoveEnemy()
+    {
+        photonView.RPC("OnChangeIsItemUse", RpcTarget.All);
+    }
+
+    [PunRPC]
+    public void OnChangeIsUseMoveEnemy()
+    {
+        PlayManager.pm_instance.isUseMoveEnemy = true;
+    }
+
+    public void ChangeIsUseDoubleMove()
+    {
+        photonView.RPC("OnChangeIsUseDoubleMove", RpcTarget.All);
+    }
+
+    [PunRPC]
+    public void OnChangeIsUseDoubleMove()
+    {
+        PlayManager.pm_instance.isUseDoubleMove = true;
+    }
+
+    public void ChangeIsUseChangeUnit(Position tempA, Position tempB)
+    {
+        Vector3 curTemp = ChangePositionToVector(tempA);
+        Vector3 tarTemp = ChangePositionToVector(tempB);
+        photonView.RPC("OnChangeIsUseChangeUnit", RpcTarget.Others, curTemp, tarTemp);
+    }
+
+    [PunRPC]
+    public void OnChangeIsUseChangeUnit(Vector3 curTemp, Vector3 tarTemp)
+    {
+        Position curPosition = ChangeVectorToPosition(curTemp);
+        Position tarPosition = ChangeVectorToPosition(tarTemp);
+        PlayManager.pm_instance.ChangeUnitPositionPhoton(curPosition, tarPosition);
+    }
+
     //public void ChangeTrun()
     //{
     //    photonView.RPC("OnChangeTrun", RpcTarget.Others);
