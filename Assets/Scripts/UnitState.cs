@@ -250,16 +250,7 @@ public class UnitState : MonoBehaviour
                     this.status.SetPosition(-10, -10);
                     gameObject.SetActive(false);
                     //UnitManager.um_instance.ChangeUnitList(gameObject);
-                }
-
-                // 엔딩 분기인지 확인
-                if (UnitManager.um_instance.CheckEnding())
-                {
-
-
-                    Debug.Log("게임 끝");
-                    return;
-                }
+                }                
 
                 PlayManager.pm_instance.ChangeTurn();
             }

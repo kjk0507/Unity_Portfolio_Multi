@@ -99,5 +99,20 @@ namespace UnitStruct
             this.x = x;
             this.y = y;
         }
+
+        public static bool operator ==(Position a, Position b)
+        {
+            if (ReferenceEquals(a, b))
+                return true;
+            if (((object)a == null) || ((object)b == null))
+                return false;
+
+            return a.x == b.x && a.y == b.y;
+        }
+
+        public static bool operator !=(Position a, Position b)
+        {
+            return !(a == b);
+        }
     }
 }

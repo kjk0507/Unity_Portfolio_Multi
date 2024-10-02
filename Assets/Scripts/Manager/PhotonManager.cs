@@ -8,6 +8,7 @@ using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnitStruct;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class PhotonManager : MonoBehaviourPunCallbacks
 {
@@ -30,6 +31,17 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
     private void Awake()
     {
+        if (pm_instance != null && pm_instance != this)
+        {
+            Destroy(gameObject); // 중복된 PhotonManager가 있으면 새로 생성된 객체 파괴
+        }
+        else
+        {
+            pm_instance = this;
+            DontDestroyOnLoad(gameObject); // PhotonManager 유지
+        }
+
+
         // 방장이 씬 로딩시 나머지 사람들이 자동으로 싱크
         PhotonNetwork.AutomaticallySyncScene = true;
 
@@ -44,14 +56,14 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
     void Start()
     {
-        if (pm_instance == null)
-        {
-            pm_instance = this;
-        }
-        else if (pm_instance != this)
-        {
-            Destroy(gameObject);
-        }
+        //if (pm_instance == null)
+        //{
+        //    pm_instance = this;
+        //}
+        //else if (pm_instance != this)
+        //{
+        //    Destroy(gameObject);
+        //}
 
         Debug.Log("포톤 매니저 시작");
         PhotonNetwork.NickName = userId;
@@ -214,6 +226,12 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         Debug.Log("플레이어가 방을 떠났습니다: " + otherPlayer.NickName);
         roomInfoObject.GetComponent<RoomInfo>().CheckParticipant("");
         roomInfoObject.GetComponent<RoomInfo>().CheckRefresh();
+    }
+    public override void OnLeftRoom()
+    {
+        //SceneManager.LoadScene("MainScene");
+        Destroy(GameManager.gm_instance.gameObject);
+        PhotonNetwork.LoadLevel("MainScene");
     }
 
     public void JoinRoom()
@@ -439,6 +457,31 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         Position curPosition = ChangeVectorToPosition(curTemp);
         Position tarPosition = ChangeVectorToPosition(tarTemp);
         PlayManager.pm_instance.ChangeUnitPositionPhoton(curPosition, tarPosition);
+    }
+
+    public void LeaveRoomForAll()
+    {
+        if (PhotonNetwork.IsConnectedAndReady)
+        {
+            photonView.RPC("OnLeaveRoomForAll", RpcTarget.All);
+        }
+        else
+        {
+            Debug.LogWarning("PhotonNetwork is not connected and ready.");
+        }
+    }
+
+    [PunRPC]
+    public void OnLeaveRoomForAll()
+    {
+        if (PhotonNetwork.IsConnectedAndReady)
+        {
+            PhotonNetwork.LeaveRoom();
+        }
+        else
+        {
+            Debug.LogWarning("Client is not connected or ready.");
+        }
     }
 
     //public void ChangeTrun()

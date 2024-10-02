@@ -2350,17 +2350,35 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spawnPoints: []
   isMyturn: 0
+  isAction: 0
   curPhase: 0
   curRole: 0
   cameraObject: {fileID: 0}
   lightObject: {fileID: 0}
   checkedObject: {fileID: 0}
+  checkedEnemyObject: {fileID: 0}
   isMakePlatform: 0
   targetPosition:
     x: 0
     y: 0
   blueReady: 0
   redReady: 0
+  itemTurnCount: 0
+  itemList: []
+  isUseItem: 0
+  isUseChangePosition: 0
+  isUseMoveEnemy: 0
+  isUseDoubleMove: 0
+  isUseUncover: 0
+  item01: 0
+  item02: 0
+  item03: 0
+  item04: 0
+  changeUnit01: {fileID: 0}
+  changeUnit02: {fileID: 0}
+  fakeUnit01: {fileID: 0}
+  fakeUnit02: {fileID: 0}
+  uncoverTargetObj: {fileID: 0}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -2514,8 +2532,11 @@ MonoBehaviour:
   tileList: []
   bluePlaceLocation: []
   redPlaceLocation: []
+  itemList: []
   blueUnitList: []
   redUnitList: []
+  blueDeathUnitList: []
+  redDeathUnitList: []
 --- !u!1 &1218094723
 GameObject:
   m_ObjectHideFlags: 0
@@ -2814,6 +2835,27 @@ MonoBehaviour:
   checkUnitPosition: {fileID: 0}
   readyButton: {fileID: 0}
   resetButton: {fileID: 0}
+  turnInfo: {fileID: 0}
+  watingTurn: {fileID: 0}
+  blueTurn: {fileID: 0}
+  redTurn: {fileID: 0}
+  knightDeathText: {fileID: 0}
+  royaltyDeathText: {fileID: 0}
+  bottomLayer: {fileID: 0}
+  itemButton01: {fileID: 0}
+  itemButton02: {fileID: 0}
+  itemButton03: {fileID: 0}
+  itemButton04: {fileID: 0}
+  itemName: {fileID: 0}
+  itemNum: {fileID: 0}
+  itemInfo: {fileID: 0}
+  itemUse: {fileID: 0}
+  checkConfirm: {fileID: 0}
+  confirmButton: {fileID: 0}
+  cancelButton: {fileID: 0}
+  curClickedItem: 0
+  selectUnit00: {fileID: 0}
+  selectUnit01: {fileID: 0}
 --- !u!1 &1609016191
 GameObject:
   m_ObjectHideFlags: 0

@@ -668,8 +668,57 @@ public class UnitManager : MonoBehaviour
         return result;
     }
 
-    public bool CheckEnding()
+    public void CheckEnding()
     {
+        PlayerRole curRole = PlayManager.pm_instance.curRole;
+        PlayerDefine playerDefine = PlayerDefine.Blue;
+
+        if(curRole == PlayerRole.Master)
+        {
+            playerDefine = PlayerDefine.Blue;
+        } 
+        else if(curRole == PlayerRole.Participant)
+        {
+            playerDefine = PlayerDefine.Red;
+        }
+
+        string result = CheckEndingText();
+        Debug.Log("엔딩(?) : " + result);
+
+        // 엔딩 분기인지 확인
+        if (result != "none")
+        {
+            if (result == "blue")
+            {
+                if (playerDefine == PlayerDefine.Blue)
+                {
+                    UIManager.um_instance.GameEndingText("게임 승리");
+                }
+                else if (playerDefine == PlayerDefine.Red)
+                {
+                    UIManager.um_instance.GameEndingText("게임 패배");
+                }
+            }
+            else if (result == "red")
+            {
+                if (playerDefine == PlayerDefine.Blue)
+                {
+                    UIManager.um_instance.GameEndingText("게임 패배");
+                }
+                else if (playerDefine == PlayerDefine.Red)
+                {
+                    UIManager.um_instance.GameEndingText("게임 승리");
+                }
+            }
+
+            return;
+        }
+    }
+
+    public string CheckEndingText()
+    {
+        string result = "none";
+
         // 기사가 다 잡혔는지
         int blueKnight = 0;
         int redKnight = 0;
@@ -704,15 +753,27 @@ public class UnitManager : MonoBehaviour
         }
 
         // 기사가 다 잡힌 경우
-        if(blueKnight == 4 || redKnight == 4) 
+        if(blueKnight == 4) 
         {
-            return true;
+            result = "blue";
+            return result;
+        } 
+        else if(redKnight == 4)
+        {
+            result = "red";
+            return result;
         }
 
         // 왕족이 다 잡힌 경우
-        if(blueRoyalty == 4 || redRoyalty == 4)
+        if(blueRoyalty == 4)
         {
-            return true;
+            result = "red";
+            return result;
+        }
+        else if(redRoyalty == 4)
+        {
+            result = "blue";
+            return result;
         }
 
         // 왕족이 탈출 했는지 (3,-3) -> 레드 탈출 / (-3, 3) -> 블루 탈출
@@ -728,18 +789,19 @@ public class UnitManager : MonoBehaviour
 
             if (type == UnitType.Royalty && playerDefine == PlayerDefine.Blue && position == blueGoal)
             {
-                return true;
+                result = "blue";
+                return result;
             } else if(type == UnitType.Royalty && playerDefine == PlayerDefine.Red && position == redGoal)
             {
-                return true;
+                result = "red";
+                return result;
             }
         }
 
-
-        return false;
+        return result;
     }
 
-    public bool CheckEmptyPostion(Position point)
+    public bool CheckEmptyPosition(Position point)
     {
         bool isEmpty = true;
 

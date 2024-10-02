@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using ItemStruct;
 using Unity.VisualScripting;
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
@@ -49,7 +50,13 @@ public class UIManager : MonoBehaviour
     public Button confirmButton;
     public Button cancelButton;
 
-    public ItemNameNum curClickedItem;    
+    public ItemNameNum curClickedItem;
+    public GameObject selectUnit00;
+    public GameObject selectUnit01;
+
+    // 게임 엔딩
+    public GameObject gameEnd;
+    public TextMeshProUGUI endingText;
 
     void Start()
     {
@@ -166,6 +173,8 @@ public class UIManager : MonoBehaviour
             itemUse = GameObject.Find("ItemUse").GetComponent<Button>();
 
             checkConfirm = GameObject.Find("CheckConfirm");
+            selectUnit00 = GameObject.Find("SelectUnit00");
+            selectUnit01 = GameObject.Find("SelectUnit01");
             confirmButton = GameObject.Find("ConfirmButton").GetComponent<Button>();
             cancelButton = GameObject.Find("CancelButton").GetComponent<Button>();
 
@@ -174,14 +183,16 @@ public class UIManager : MonoBehaviour
             itemButton03.onClick.AddListener(() => ClickedItemButton(3));
             itemButton04.onClick.AddListener(() => ClickedItemButton(4));
 
-            confirmButton.onClick.AddListener(() => ButtonItemUseConfirm());
-            cancelButton.onClick.AddListener(() => ButtonItemUseCancel());
-
             curClickedItem = ItemNameNum.ChangePosition;
             ClickedItemButton(1);
 
             bottomLayer.SetActive(false);
             checkConfirm.SetActive(false);
+
+            gameEnd = GameObject.Find("GameEnd");
+            endingText = GameObject.Find("EndingText").GetComponent<TextMeshProUGUI>();
+
+            gameEnd.SetActive(false);
 
             CreatGoalPosition();
 
@@ -333,6 +344,8 @@ public class UIManager : MonoBehaviour
     {
         ItemNameNum temp = (ItemNameNum)num;
 
+        itemUse.onClick.RemoveAllListeners();
+
         switch (temp)
         {
             case ItemNameNum.ChangePosition:
@@ -429,8 +442,13 @@ public class UIManager : MonoBehaviour
         {
             case ItemNameNum.ChangePosition:
                 PlayManager.pm_instance.isUseItem = true;
-                checkConfirm.SetActive(true);
                 PlayManager.pm_instance.isUseChangePosition = true;
+                checkConfirm.SetActive(true);
+                selectUnit00.SetActive(true);
+                selectUnit01.SetActive(true);
+                confirmButton.onClick.RemoveAllListeners();
+                confirmButton.onClick.AddListener(() => ButtonItemUseConfirm());
+                cancelButton.onClick.AddListener(() => ButtonItemUseCancel());
                 break;
             case ItemNameNum.MoveEnemy:
                 PlayManager.pm_instance.isUseItem = true;
@@ -443,7 +461,13 @@ public class UIManager : MonoBehaviour
                 PhotonManager.pm_instance.ChangeIsUseDoubleMove();
                 break;
             case ItemNameNum.Uncover:
-                
+                checkConfirm.SetActive(true);
+                selectUnit00.SetActive(true);
+                selectUnit01.SetActive(false);
+                PlayManager.pm_instance.isUseUncover = true;
+                confirmButton.onClick.RemoveAllListeners();
+                confirmButton.onClick.AddListener(() => ButtonItemUseUncover());
+                cancelButton.onClick.AddListener(() => ButtonItemUseCancel());
                 break;
             case ItemNameNum.Bomb:
                 break;
@@ -455,11 +479,36 @@ public class UIManager : MonoBehaviour
     public void ButtonItemUseConfirm()
     {
         PlayManager.pm_instance.ChangeUnitPosition();
+        PlayManager.pm_instance.item01--;
+        ChangeItemNum(ItemNameNum.ChangePosition);
     }
 
     public void ButtonItemUseCancel()
     {
+        PlayManager.pm_instance.isUseItem = false;
         checkConfirm.SetActive(false);
         PlayManager.pm_instance.ClearChangeUnit();
+    }
+
+    public void ButtonItemUseUncover()
+    {
+        PlayManager.pm_instance.UncoverUnitHide();
+        PlayManager.pm_instance.item04--;
+        ChangeItemNum(ItemNameNum.Uncover);
+    }
+
+    public void GameEndingText(string text)
+    {
+        gameEnd.SetActive(true);
+        endingText.text = text;
+
+        StartCoroutine(WaitAndLoadScene(5f));
+    }
+
+    private IEnumerator WaitAndLoadScene(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        PhotonManager.pm_instance.LeaveRoomForAll();
+        //SceneManager.LoadScene("MainScene");
     }
 }

@@ -6,6 +6,7 @@ using EnumStruct;
 using UnityEngine.SceneManagement;
 using UnityEngine.Experimental.GlobalIllumination;
 using UnitStruct;
+using Unity.VisualScripting;
 
 public class PlayManager : MonoBehaviour
 {
@@ -39,6 +40,7 @@ public class PlayManager : MonoBehaviour
     public bool isUseChangePosition = false;
     public bool isUseMoveEnemy = false;
     public bool isUseDoubleMove = false;
+    public bool isUseUncover = false;
 
     public int item01;
     public int item02;
@@ -50,6 +52,9 @@ public class PlayManager : MonoBehaviour
     public GameObject changeUnit02;
     public GameObject fakeUnit01;
     public GameObject fakeUnit02;
+
+    // 숨김 확인 대상
+    public GameObject uncoverTargetObj;
 
     private void Awake()
     {
@@ -68,10 +73,10 @@ public class PlayManager : MonoBehaviour
     {
         Debug.Log("Play Start");
         //CreatePlayer();
-        item01 = 1;
-        item02 = 1;
-        item03 = 1;
-        item04 = 1;
+        //item01 = 1;
+        //item02 = 1;
+        //item03 = 1;
+        //item04 = 1;
     }
 
     void Update()
@@ -264,11 +269,17 @@ public class PlayManager : MonoBehaviour
                     }
                 }
 
-
                 // 적 유닛 클릭 상황인 경우
-                if (clickedObject.layer == enemyUnit)
+                if (clickedObject.layer == enemyUnit && !isUseUncover)
                 {
                     checkedEnemyObject = clickedObject;
+                } else if(clickedObject.layer == enemyUnit && isUseUncover)
+                {
+                    uncoverTargetObj = clickedObject;
+                    GameObject unit = Resources.Load<GameObject>("Prefab/Unit/Fake/Ghost");
+                    Quaternion rotation = Quaternion.Euler(-40, -180, 0);
+                    Vector3 position = new Vector3(-2.2f, 6.5f, -18f);
+                    fakeUnit01 = Instantiate(unit, position, rotation);
                 }
 
                 // 
@@ -293,10 +304,13 @@ public class PlayManager : MonoBehaviour
     public void ClearChangeUnit()
     {
         isUseChangePosition = false;
+        isUseUncover = false;
         changeUnit01 = null;
         changeUnit02 = null;
         Destroy(fakeUnit01);
         Destroy(fakeUnit02);
+
+        uncoverTargetObj = null;
     }
 
     public void ChangeUnitPosition()
@@ -342,6 +356,21 @@ public class PlayManager : MonoBehaviour
         unit02.transform.position = tempVector01;
         unit01.transform.rotation = tempRotation02;
         unit02.transform.rotation = tempRotation01;
+    }
+
+    public void UncoverUnitHide()
+    {
+        Debug.Log(uncoverTargetObj.ToString());
+
+        if (uncoverTargetObj == null)
+        {
+            return;
+        }
+
+        Debug.Log(uncoverTargetObj.GetComponent<UnitState>().status.GetName());
+
+        uncoverTargetObj.GetComponent<UnitState>().isHide = false;
+        UIManager.um_instance.ButtonItemUseCancel();
     }
 
     public void CheckUnitGo()
@@ -435,7 +464,9 @@ public class PlayManager : MonoBehaviour
         else
         {
             itemTurnCount = 0;
-        }        
+        }
+
+        UnitManager.um_instance.CheckEnding();
 
         if (isMyturn)
         {
@@ -474,7 +505,7 @@ public class PlayManager : MonoBehaviour
             temp = new Position(randomX, randomY);
 
         } 
-        while (!UnitManager.um_instance.CheckEmptyPostion(temp));
+        while (!UnitManager.um_instance.CheckEmptyPosition(temp));
 
         CreateItemPosition(temp);
         PhotonManager.pm_instance.CreatItem(temp);
@@ -542,7 +573,7 @@ public class PlayManager : MonoBehaviour
                 return item02;
             case ItemNameNum.DoubleMove: 
                 return item03;
-            case ItemNameNum.Bomb: 
+            case ItemNameNum.Uncover: 
                 return item04;
         }
 
